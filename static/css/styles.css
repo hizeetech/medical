@@ -1,0 +1,61 @@
+/* Basic theme customization */
+:root {
+  --brand-primary: #0d6efd;
+}
+
+body {
+  font-feature-settings: "liga" 1, "kern" 1;
+}
+
+.hero {
+  background: linear-gradient(135deg, rgba(13,110,253,.1), rgba(13,110,253,.03));
+  border: 1px solid rgba(13,110,253,.15);
+  border-radius: .75rem;
+}
+
+.card-shadow {
+  box-shadow: 0 0.5rem 1rem rgba(0,0,0,.08);
+}
+
+/* Make default inputs look closer to Bootstrap controls without adding classes */
+form .form-control input,
+form .form-control select,
+form .form-control textarea,
+form input:not([type=checkbox]):not([type=radio]),
+form select,
+form textarea {
+  width: 100%;
+  padding: .5rem .75rem;
+  border: 1px solid #ced4da;
+  border-radius: .375rem;
+  background-color: #fff;
+}
+
+form .invalid-feedback { font-size: .875rem; }
+
+.btn-primary { box-shadow: 0 .125rem .25rem rgba(13,110,253,.3); }
+
+.navbar-brand i { font-size: 1.15rem; }
+
+/* Topbar & navbar (MedPark-like) */
+.topbar { font-weight: 500; }
+.navbar .nav-link { color: #344767; }
+.navbar .nav-link:hover { color: var(--brand-primary); }
+.navbar .dropdown-menu { border-radius: .5rem; padding: .5rem; }
+.btn-appointment { box-shadow: 0 0.25rem 0.5rem rgba(13,110,253,.25); }
+
+/* Doctor card tweaks inspired by MedPark layout */
+.doctor-card { border-radius: 12px; }
+.doctor-avatar { width: 120px; }
+.placeholder-avatar { width: 120px; height: 120px; }
+.btn-appointment { border-radius: 8px; padding: 0.6rem 1rem; }
+.doctor-slots th, .doctor-slots td { min-width: 110px; }
+.doctor-slots thead th { font-weight: 600; color: #6c757d; }
+
+/* Homepage hero image flushed right */
+.hero-image {
+  max-height: 360px;
+  border-radius: .75rem;
+  box-shadow: 0 0.5rem 1rem rgba(0,0,0,.08);
+  object-fit: cover;
+}

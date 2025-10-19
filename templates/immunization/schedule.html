@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+  <h2>Immunization Schedule</h2>
+
+  {% if grouped_by_baby %}
+    {% for group in grouped_by_baby %}
+      <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <div>
+            <strong>{{ group.baby.name }}</strong> — DOB: {{ group.baby.date_of_birth|date:'Y-m-d' }}
+            {% if user.is_staff %}
+              <span class="ms-2">
+                <a href="{% url 'manage_baby_immunizations' group.baby.id %}" class="btn btn-sm btn-outline-secondary">Manage</a>
+              </span>
+            {% endif %}
+            <span class="ms-2">
+              <a href="{% url 'baby_immunization_pdf' group.baby.id %}" class="btn btn-sm btn-outline-primary">Export PDF</a>
+            </span>
+          </div>
+        </div>
+        <div class="card-body">
+          {% if group.items %}
+            <table class="table table-sm">
+              <thead>
+                <tr>
+                  <th>Vaccine</th>
+                  <th>Recommended Date</th>
+                  <th>Status</th>
+                  <th>Completed Date</th>
+                  {% if user.is_staff %}<th>Notes</th>{% endif %}
+                </tr>
+              </thead>
+              <tbody>
+                {% for s in group.items %}
+                  <tr>
+                    <td>{{ s.vaccine_name }}</td>
+                    <td>{{ s.scheduled_date|date:'Y-m-d' }}</td>
+                    <td>{{ s.get_status_display }}</td>
+                    <td>{% if s.date_completed %}{{ s.date_completed|date:'Y-m-d' }}{% else %}-{% endif %}</td>
+                    {% if user.is_staff %}<td>{{ s.notes|default:'' }}</td>{% endif %}
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          {% else %}
+            <p class="text-muted">No immunizations scheduled.</p>
+          {% endif %}
+        </div>
+      </div>
+    {% endfor %}
+  {% else %}
+    <p>No babies registered.</p>
+  {% endif %}
+</div>
+{% endblock %}

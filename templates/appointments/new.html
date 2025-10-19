@@ -1,0 +1,364 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-4">
+  <h2 class="mb-4">Request an Appointment</h2>
+
+  {% if doctor %}
+    <div class="card mb-3 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex align-items-start">
+          <img src="{{ doctor.avatar.url }}" alt="{{ doctor.get_full_name }}" class="rounded" width="72" height="72">
+          <div class="ms-3">
+            <h5 class="mb-1">Dr. {{ doctor.get_full_name }}</h5>
+            {% if doctor.specialty %}
+            <div class="text-muted small">{{ doctor.specialty }}{% if doctor.sub_specialty %} • {{ doctor.sub_specialty }}{% endif %}</div>
+            {% endif %}
+            {% if doctor.treatments_services %}
+            <div class="mt-2">
+              <div class="text-muted small"><strong>Treatments And Services</strong></div>
+              <div>{{ doctor.treatments_services }}</div>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  {% else %}
+    <div class="alert alert-info">No doctor selected. You can book with any doctor on duty or choose a doctor below.</div>
+  {% endif %}
+
+  <div class="row">
+    <div class="col-lg-8">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title">Your Information</h5>
+          <form method="post" action="{% url 'appointment_new' %}?doctor={{ doctor_slug }}&step={{ step }}">
+            {% csrf_token %}
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Full Name</label>
+                <input type="text" class="form-control" name="full_name" placeholder="Your name">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Phone Number</label>
+                <input type="text" class="form-control" name="phone" placeholder="e.g. 08012345678">
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Email</label>
+                <input type="email" class="form-control" name="email" placeholder="you@example.com">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Appointment Type</label>
+                <select class="form-select" name="appointment_type">
+                  <option value="ANTENATAL">Antenatal</option>
+                  <option value="POSTNATAL">Postnatal</option>
+                  <option value="IMMUNIZATION">Immunization</option>
+                </select>
+              </div>
+            </div>
+            {% if not doctor %}
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Booking Option</label>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="booking_mode" id="mode_any" value="ANY" checked>
+                  <label class="form-check-label" for="mode_any">Any doctor on duty</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="booking_mode" id="mode_choose" value="CHOOSE">
+                  <label class="form-check-label" for="mode_choose">Choose a doctor</label>
+                </div>
+              </div>
+              <div id="doctor_select_container" class="col-md-6 mb-3">
+                <label class="form-label" for="doctor_select">Select Doctor</label>
+                <select class="form-select" id="doctor_select" name="doctor_select" disabled>
+                  <option value="">Select a doctor</option>
+                </select>
+                <input type="hidden" id="selected_doctor" name="selected_doctor" value="ANY">
+              </div>
+            </div>
+            {% endif %}
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Preferred Date</label>
+                <input type="text" class="form-control" id="preferred_date" name="preferred_date" placeholder="Select a date">
+                <div class="form-text">Only available dates are selectable.</div>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Available Times</label>
+                <div id="available-times" class="d-flex flex-wrap gap-2"></div>
+                <div id="no-times" class="text-muted small" style="display:none;">Select a date to see available times.</div>
+                <div id="assigned-doctor-note" class="text-muted small mt-1"></div>
+                <input type="hidden" id="preferred_time" name="preferred_time" value="">
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-12 mb-3">
+                <label class="form-label">Message</label>
+                <textarea class="form-control" name="message" rows="3" placeholder="Additional details"></textarea>
+              </div>
+            </div>
+
+            <div class="d-flex justify-content-end">
+              <button type="submit" class="btn btn-primary">Submit Request</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-4 mt-4 mt-lg-0">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h6 class="mb-3">Step {{ step }} of 1</h6>
+          <p class="text-muted">You’re requesting an appointment with <strong id="booking_summary">{% if doctor %}{{ doctor.get_full_name }}{% else %}Any doctor on duty{% endif %}</strong>.</p>
+          <p class="small text-muted">We’ll contact you to confirm availability.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Flatpickr CSS/JS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script>
+    (function() {
+      var doctorPresent = {% if doctor %}true{% else %}false{% endif %};
+      var availableDates = {{ available_dates_json|safe }} || [];
+      var timesByDate = {{ times_by_date_json|safe }} || {};
+      var doctorsList = {{ doctors_list_json|safe }} || [];
+      var anyDates = {{ any_available_dates_json|safe }} || [];
+      var anyTimesByDate = {{ any_times_by_date_json|safe }} || {};
+      var datesByDoctor = {{ available_dates_by_doctor_json|safe }} || {};
+      var timesByDateByDoctor = {{ times_by_date_by_doctor_json|safe }} || {};
+      var anyMeta = {{ any_slot_meta_by_date_time_json|safe }} || {};
+      var metaByDoc = {{ slot_meta_by_doctor_json|safe }} || {};
+      var presentDoctorId = {% if doctor_id %}{{ doctor_id }}{% else %}null{% endif %};
+  
+      var mode = 'ANY';
+      var selectedDoctorId = null;
+      var bookingSummaryEl = document.getElementById('booking_summary');
+  
+      function updateSummary() {
+        if (!bookingSummaryEl) return;
+        if (doctorPresent) {
+          // Server-rendered doctor name already shown
+          return;
+        }
+        if (mode === 'ANY') {
+          bookingSummaryEl.textContent = 'Any doctor on duty';
+          return;
+        }
+        if (selectedDoctorId) {
+          var doc = doctorsList.find(function(d){ return String(d.id) === String(selectedDoctorId); });
+          bookingSummaryEl.textContent = doc ? ('Dr. ' + (doc.name || doc.email)) : 'Choose a doctor';
+        } else {
+          bookingSummaryEl.textContent = 'Choose a doctor';
+        }
+      }
+  
+      function updateSelectedDoctorHidden() {
+        var hiddenSelDoc = document.getElementById('selected_doctor');
+        if (!hiddenSelDoc) return;
+        if (doctorPresent) return; // selected doctor is fixed server-side
+        if (mode === 'ANY') {
+          hiddenSelDoc.value = 'ANY';
+        } else {
+          hiddenSelDoc.value = selectedDoctorId ? String(selectedDoctorId) : '';
+        }
+      }
+
+      function populateDoctorSelect() {
+        var sel = document.getElementById('doctor_select');
+        if (!sel) return;
+        sel.innerHTML = '<option value="">Select a doctor</option>';
+        doctorsList.forEach(function(d){
+          var opt = document.createElement('option');
+          opt.value = d.id;
+          var label = 'Dr. ' + (d.name || d.email);
+          if (d.specialty) label += ' — ' + d.specialty;
+          opt.textContent = label;
+          sel.appendChild(opt);
+        });
+      }
+  
+      function getTimesFor(dateStr) {
+        if (doctorPresent) return timesByDate[dateStr] || [];
+        if (mode === 'ANY') return anyTimesByDate[dateStr] || [];
+        if (selectedDoctorId) {
+          var key = String(selectedDoctorId);
+          var map = timesByDateByDoctor[key] || {};
+          return map[dateStr] || [];
+        }
+        return [];
+      }
+  
+      function getMetaFor(dateStr, timeStr) {
+        if (doctorPresent && presentDoctorId != null) {
+          var byDate = metaByDoc[String(presentDoctorId)] || {};
+          var byTime = byDate[dateStr] || {};
+          return byTime[timeStr] || null;
+        }
+        if (mode === 'ANY') {
+          var byTimeAny = (anyMeta[dateStr] || {});
+          return byTimeAny[timeStr] || null;
+        }
+        if (selectedDoctorId) {
+          var byDateDoc = metaByDoc[String(selectedDoctorId)] || {};
+          var byTimeDoc = byDateDoc[dateStr] || {};
+          return byTimeDoc[timeStr] || null;
+        }
+        return null;
+      }
+  
+      function pickDoctorForSlot(dateStr, timeStr) {
+        var m = getMetaFor(dateStr, timeStr);
+        return m ? m.doctor_id : null;
+      }
+  
+      function renderTimes(dateStr) {
+        var container = document.getElementById('available-times');
+        var emptyMsg = document.getElementById('no-times');
+        var hidden = document.getElementById('preferred_time');
+        var assignedNote = document.getElementById('assigned-doctor-note');
+        if (!container) return;
+        container.innerHTML = '';
+        hidden.value = '';
+        if (assignedNote) assignedNote.textContent = '';
+        var times = getTimesFor(dateStr);
+        if (!times.length) {
+          if (emptyMsg) emptyMsg.style.display = 'block';
+          return;
+        }
+        if (emptyMsg) emptyMsg.style.display = 'none';
+        times.forEach(function(t) {
+          var wrapper = document.createElement('div');
+          wrapper.className = 'd-flex align-items-center gap-2 mb-2';
+  
+          var btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'btn btn-outline-secondary btn-sm';
+          btn.textContent = t;
+  
+          var meta = getMetaFor(dateStr, t);
+          var info = document.createElement('span');
+          info.className = 'text-muted small';
+          if (meta) {
+            var locText = 'Center: ' + (meta.center_name || '');
+            if (meta.location) locText += ' — ' + meta.location;
+            info.textContent = locText;
+            btn.title = locText;
+          }
+  
+          btn.addEventListener('click', function() {
+            hidden.value = t;
+            Array.prototype.forEach.call(container.querySelectorAll('button'), function(b){ b.classList.remove('active'); });
+            btn.classList.add('active');
+            var assignedDocId = pickDoctorForSlot(dateStr, t);
+            if (!doctorPresent) {
+              selectedDoctorId = assignedDocId;
+              updateSelectedDoctorHidden();
+              updateSummary();
+            }
+            if (assignedNote) {
+              var doc = assignedDocId ? doctorsList.find(function(d){ return String(d.id) === String(assignedDocId); }) : null;
+              var docText = doc ? ('Assigned doctor: Dr. ' + (doc.name || doc.email)) : '';
+              var locText = meta ? (' | ' + ('Center: ' + (meta.center_name || '') + (meta.location ? ' — ' + meta.location : ''))) : '';
+              assignedNote.textContent = docText + locText;
+            }
+          });
+  
+          wrapper.appendChild(btn);
+          if (info.textContent) wrapper.appendChild(info);
+          container.appendChild(wrapper);
+        });
+      }
+  
+      var dateInput = document.getElementById('preferred_date');
+      var picker = null;
+      function updateDatepickerEnable() {
+        if (!picker) return;
+        var enableDates = [];
+        if (doctorPresent) {
+          enableDates = availableDates;
+        } else if (mode === 'ANY') {
+          enableDates = anyDates;
+        } else if (selectedDoctorId) {
+          var key = String(selectedDoctorId);
+          if (datesByDoctor[key]) enableDates = datesByDoctor[key];
+        }
+        picker.set('enable', enableDates);
+      }
+  
+      if (dateInput) {
+        picker = flatpickr(dateInput, {
+          dateFormat: 'Y-m-d',
+          disableMobile: true,
+          enable: doctorPresent ? availableDates : anyDates,
+          onChange: function(selectedDates, dateStr) { renderTimes(dateStr); }
+        });
+      }
+  
+      function setMode(newMode) {
+        if (doctorPresent) return; // no mode switches when doctor fixed
+        var modeAny = document.getElementById('mode_any');
+        var modeChoose = document.getElementById('mode_choose');
+        var doctorSelect = document.getElementById('doctor_select');
+        mode = newMode === 'CHOOSE' ? 'CHOOSE' : 'ANY';
+        if (modeAny) modeAny.checked = (mode === 'ANY');
+        if (modeChoose) modeChoose.checked = (mode === 'CHOOSE');
+        if (doctorSelect) doctorSelect.disabled = (mode === 'ANY');
+        if (mode === 'ANY') {
+          selectedDoctorId = null;
+        } else {
+          selectedDoctorId = doctorSelect && doctorSelect.value ? doctorSelect.value : null;
+        }
+        updateSelectedDoctorHidden();
+        updateSummary();
+        updateDatepickerEnable();
+        var current = dateInput && dateInput.value ? dateInput.value : null;
+        if (current) renderTimes(current);
+      }
+  
+      if (!doctorPresent) {
+        populateDoctorSelect();
+        var modeAny = document.getElementById('mode_any');
+        var modeChoose = document.getElementById('mode_choose');
+        var doctorSelect = document.getElementById('doctor_select');
+        var doctorSelectContainer = document.getElementById('doctor_select_container');
+        if (modeAny) modeAny.addEventListener('change', function(){ if (this.checked) setMode('ANY'); });
+        if (modeChoose) modeChoose.addEventListener('change', function(){ if (this.checked) setMode('CHOOSE'); });
+        // If user clicks the container while select is disabled, switch to CHOOSE and focus
+        if (doctorSelectContainer) doctorSelectContainer.addEventListener('click', function(e){
+          if (doctorSelect && doctorSelect.disabled) {
+            setMode('CHOOSE');
+            doctorSelect.focus();
+            e.preventDefault();
+          }
+        });
+        // Also keep a direct mousedown listener for non-disabled cases
+        if (doctorSelect) doctorSelect.addEventListener('mousedown', function(){
+          if (doctorSelect.disabled) {
+            setMode('CHOOSE');
+            doctorSelect.focus();
+          }
+        });
+        if (doctorSelect) doctorSelect.addEventListener('change', function(){
+          selectedDoctorId = this.value || null;
+          updateSelectedDoctorHidden();
+          updateSummary();
+          updateDatepickerEnable();
+          var current = dateInput.value;
+          if (current) renderTimes(current);
+        });
+        setMode('ANY');
+      }
+    })();
+  </script>
+</div>
+{% endblock %}

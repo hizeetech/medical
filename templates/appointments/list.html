@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block content %}
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="mb-0">Appointments</h3>
+    <a class="btn btn-primary" href="{% url 'appointment_new' %}"><i class="bi bi-plus-lg me-1"></i> New Appointment</a>
+  </div>
+  {% if appointments %}
+    <div class="list-group">
+      {% for appt in appointments %}
+        <div class="list-group-item d-flex justify-content-between align-items-center">
+          <div>
+            <div class="fw-semibold">{{ appt.get_appointment_type_display }}</div>
+            <div class="text-muted small">{{ appt.scheduled_at|date:"Y-m-d H:i" }} • Status: {{ appt.status }}</div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="text-muted">No appointments yet.</p>
+  {% endif %}
+{% endblock %}

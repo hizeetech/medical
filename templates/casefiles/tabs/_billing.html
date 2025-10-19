@@ -1,0 +1,70 @@
+{% load static %}
+<div class="d-flex justify-content-between align-items-center mb-2">
+  <h2 class="h5 mb-0">Billing & Payment Records</h2>
+  <span class="badge text-bg-secondary">Receptionists/Admin manage payments</span>
+</div>
+<div class="row g-3">
+  <div class="col-lg-7">
+    <div class="card shadow-sm mb-3">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <div class="fw-semibold">Total Invoice Amount</div>
+          <div class="fs-5">₦{{ invoices_total }}</div>
+        </div>
+        <div class="list-group">
+          {% for inv in invoices %}
+            <div class="list-group-item d-flex justify-content-between align-items-center">
+              <div>
+                <div class="fw-semibold">Ref: {{ inv.reference }} · ₦{{ inv.amount }}</div>
+                <div class="small text-muted">{{ inv.description|default:'—' }}</div>
+              </div>
+              <span class="badge text-bg-light border">{{ inv.status }}</span>
+            </div>
+          {% empty %}
+            <div class="list-group-item">No invoices yet.</div>
+          {% endfor %}
+        </div>
+        <div class="mt-3">
+          <a class="btn btn-outline-primary" href="/billing/"><i class="bi bi-receipt"></i> Go to Billing</a>
+        </div>
+      </div>
+    </div>
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h6 class="text-muted">Case Billing Records</h6>
+        {% if billing_records %}
+          <div class="list-group">
+            {% for br in billing_records %}
+              <div class="list-group-item d-flex justify-content-between align-items-center">
+                <div>
+                  <div class="fw-semibold">₦{{ br.total_amount }}</div>
+                  <div class="small text-muted">Consultation: ₦{{ br.consultation_fee }} · Lab: ₦{{ br.lab_charges }} · Medication: ₦{{ br.medication_cost }}</div>
+                  {% if br.invoice %}<div class="small">Invoice: {{ br.invoice.reference }}</div>{% endif %}
+                </div>
+                <span class="badge text-bg-light border">{{ br.payment_status }}</span>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="text-muted">No case billing entries.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-5">
+    {% if user.role == 'RECEPTIONIST' or user.role == 'ADMIN' %}
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h6 class="card-title">Add Billing Record</h6>
+        <form hx-post="{% url 'casefile_billing_new' case_file.id %}" hx-target="#tab-content" hx-swap="innerHTML">
+          {% csrf_token %}
+          {{ form.as_p }}
+          <div class="d-grid mt-2">
+            <button class="btn btn-primary" type="submit"><i class="bi bi-plus-circle"></i> Add Billing Record</button>
+          </div>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>

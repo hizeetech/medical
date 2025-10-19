@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+  <h2>Invoices</h2>
+  <table class="table table-striped mt-3">
+    <thead>
+      <tr>
+        <th>Reference</th>
+        <th>Patient</th>
+        <th>Description</th>
+        <th>Amount</th>
+        <th>Status</th>
+        <th>Created</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for inv in invoices %}
+      <tr>
+        <td>{{ inv.reference }}</td>
+        <td>{{ inv.patient.full_name }}</td>
+        <td>{{ inv.description }}</td>
+        <td>₦{{ inv.amount }}</td>
+        <td>{{ inv.get_status_display }}</td>
+        <td>{{ inv.created_at|date:'Y-m-d H:i' }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="6" class="text-center">No invoices found</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

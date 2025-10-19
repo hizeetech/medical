@@ -1,0 +1,118 @@
+{% load static %}
+<div class="d-flex justify-content-between align-items-center mb-2">
+  <h2 class="h5 mb-0">Maternity & Pediatric</h2>
+  <span class="badge text-bg-secondary">Mother & baby follow-up</span>
+</div>
+<div class="row g-3">
+  <div class="col-lg-6">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h6 class="text-muted">Babies</h6>
+        {% if babies %}
+          <ul class="list-group">
+            {% for b in babies %}
+              <li class="list-group-item">
+                <div class="fw-semibold">{{ b.full_name|default:"Baby" }} · {{ b.date_of_birth|date:'M d, Y' }}</div>
+                <div class="small text-muted">Registered by: {% if b.registered_by %}{{ b.registered_by.full_name|default:b.registered_by.email }}{% else %}Unknown{% endif %}</div>
+                <div class="mt-2"><a href="{% url 'immunization_manage_baby' b.id %}" class="btn btn-sm btn-outline-primary">Manage Immunizations</a></div>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <div class="text-muted">No baby profiles.</div>
+        {% endif %}
+      </div>
+    </div>
+    {% if user.role == 'DOCTOR' or user.role == 'NURSE' %}
+    <div class="card shadow-sm mt-3">
+      <div class="card-body">
+        <h6 class="card-title">Register New Baby Profile</h6>
+        <form hx-post="{% url 'casefile_baby_new' case_file.id %}" hx-target="#tab-content" hx-swap="innerHTML">
+          {% csrf_token %}
+          {{ form.as_p }}
+          <div class="d-grid mt-2">
+            <button class="btn btn-primary" type="submit"><i class="bi bi-save"></i> Save</button>
+          </div>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+  <div class="col-lg-6">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h6 class="text-muted">Immunization Schedules</h6>
+        {% if schedules %}
+          <div class="list-group">
+            {% for s in schedules %}
+              <div class="list-group-item d-flex justify-content-between align-items-center">
+                <div>
+                  <div class="fw-semibold">{{ s.vaccine_name }}</div>
+                  <div class="small text-muted">{{ s.scheduled_date|date:'M d, Y' }} · {{ s.get_status_display }}</div>
+                </div>
+                {% if s.status == 'DUE' %}
+                  <span class="badge text-bg-warning">Due</span>
+                {% elif s.status == 'MISSED' %}
+                  <span class="badge text-bg-danger">Missed</span>
+                {% else %}
+                  <span class="badge text-bg-success">Done</span>
+                {% endif %}
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="text-muted">No schedules available.</div>
+        {% endif %}
+        <div class="mt-3"><a class="btn btn-outline-secondary" href="{% url 'immunization_schedule_all' %}"><i class="bi bi-file-earmark-text"></i> View All Schedules</a></div>
+      </div>
+    </div>
+
+    {% if user.role == 'DOCTOR' or user.role == 'NURSE' %}
+    <div class="card shadow-sm mt-3">
+      <div class="card-body">
+        <h6 class="card-title">Maternity/Pediatric Notes & Uploads</h6>
+        <form hx-post="{% url 'casefile_attachment_new' case_file.id %}" hx-target="#tab-content" hx-swap="innerHTML" enctype="multipart/form-data">
+          {% csrf_token %}
+          <input type="hidden" name="attachment_type" value="MATERNITY">
+          <div class="mb-2">
+            <label class="form-label">Notes</label>
+            <textarea name="title" class="form-control" rows="3" placeholder="Notes or description"></textarea>
+          </div>
+          <div class="mb-2">
+            <label class="form-label">Upload</label>
+            <input type="file" name="file" class="form-control" accept="image/*">
+          </div>
+          <div class="d-grid mt-2">
+            <button class="btn btn-primary" type="submit"><i class="bi bi-save"></i> Save</button>
+          </div>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="card shadow-sm mt-3">
+      <div class="card-body">
+        <h6 class="text-muted">Maternity/Pediatric Attachments</h6>
+        {% with mats=case_file.attachments.all %}
+          {% if mats %}
+            <div class="list-group">
+              {% for a in mats %}
+                {% if a.attachment_type == 'MATERNITY' or a.attachment_type == 'PEDIATRIC' %}
+                  <div class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                      <div class="fw-semibold">{{ a.title }}</div>
+                      <div class="small text-muted">{{ a.created_at|date:'M d, Y H:i' }} · {% if a.uploaded_by %}{{ a.uploaded_by.full_name|default:a.uploaded_by.email }}{% else %}Unknown{% endif %}</div>
+                    </div>
+                    <a class="btn btn-sm btn-outline-secondary" href="{{ a.file.url }}" target="_blank"><i class="bi bi-download"></i> Download</a>
+                  </div>
+                {% endif %}
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="text-muted">No attachments yet.</div>
+          {% endif %}
+        {% endwith %}
+      </div>
+    </div>
+  </div>
+</div>

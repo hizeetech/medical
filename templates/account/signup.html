@@ -1,0 +1,35 @@
+{% extends "account/base.html" %}
+{% load i18n %}
+
+{% block account_title %}{% trans "Create Account" %}{% endblock %}
+
+{% block account_content %}
+  <h3 class="mb-3">{% trans "Create your account" %}</h3>
+  <p class="text-muted mb-4">Access personalized antenatal and postnatal care.</p>
+
+  <form method="post" action="{% url 'account_signup' %}">
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+      <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+    {% endif %}
+    {% for field in form %}
+      <div class="mb-3">
+        <label class="form-label">{{ field.label }}</label>
+        <div class="form-control p-0 border-0">{{ field }}</div>
+        {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+        {% for error in field.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+      </div>
+    {% endfor %}
+
+    {% if redirect_field_value %}
+      <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
+    {% endif %}
+
+    <div class="d-flex justify-content-end">
+      <button class="btn btn-primary" type="submit">{% trans "Sign Up" %}</button>
+    </div>
+  </form>
+
+  <hr class="my-4">
+  <p class="mb-0">{% trans "Already have an account?" %} <a href="{% url 'account_login' %}">{% trans "Sign in" %}</a></p>
+{% endblock %}

@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block content %}
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+      <h2 class="mb-0">Doctor Dashboard</h2>
+      <p class="text-muted">Welcome, {{ request.user.email }}.</p>
+    </div>
+    <div class="d-flex align-items-center">
+      <a class="btn btn-outline-primary me-2" href="{% url 'appointments_list' %}"><i class="bi bi-calendar-event me-1"></i> Appointments</a>
+      <a class="btn btn-primary me-3" href="{% url 'find_doctor' %}"><i class="bi bi-search me-1"></i> Find Specialists</a>
+      <form action="{% url 'casefiles_search' %}" method="get" class="d-flex" role="search">
+        <input type="text" name="q" class="form-control form-control-sm me-2" placeholder="Member ID (e.g., MED-XXXXXX)" aria-label="Member ID">
+        <button class="btn btn-outline-secondary btn-sm" type="submit"><i class="bi bi-search me-1"></i> Case Files</button>
+        <a class="btn btn-outline-primary btn-sm ms-2" href="{% url 'casefiles_search' %}"><i class="bi bi-folder2-open me-1"></i> Browse</a>
+      </form>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-md-6">
+      <div class="card card-shadow h-100">
+        <div class="card-body">
+          <div class="d-flex align-items-center mb-2">
+            <i class="bi bi-clipboard2-check text-primary me-2"></i>
+            <h5 class="card-title mb-0">My Upcoming Appointments</h5>
+          </div>
+          {% if upcoming_appointments %}
+            <ul class="list-group list-group-flush">
+              {% for appt in upcoming_appointments %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                  <div>
+                    <div class="fw-semibold">{{ appt.patient.full_name }}</div>
+                    <div class="text-muted small">{{ appt.get_appointment_type_display }} • {{ appt.scheduled_at|date:"Y-m-d H:i" }}</div>
+                  </div>
+                  <span class="badge bg-info">{{ appt.get_status_display }}</span>
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="text-muted">No upcoming appointments.</p>
+          {% endif %}
+          <a href="{% url 'appointments_list' %}" class="btn btn-outline-primary btn-sm mt-2">Go to Appointments</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="card card-shadow h-100">
+        <div class="card-body">
+          <div class="d-flex align-items-center mb-2">
+            <i class="bi bi-exclamation-triangle text-danger me-2"></i>
+            <h5 class="card-title mb-0">Alert Queue (Danger Signs)</h5>
+          </div>
+          {% if alert_queue %}
+            <ul class="list-group list-group-flush">
+              {% for alert in alert_queue %}
+                <li class="list-group-item">
+                  <div class="fw-semibold">{{ alert.mother.full_name }} {% if alert.baby %}• {{ alert.baby.name }}{% endif %}</div>
+                  <div class="text-muted small">{{ alert.symptoms|truncatechars:80 }}</div>
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="text-muted">No new alerts.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12">
+      <div class="card card-shadow">
+        <div class="card-body">
+          <div class="d-flex align-items-center mb-2">
+            <i class="bi bi-journal-medical text-primary me-2"></i>
+            <h5 class="card-title mb-0">Recent Medical Records</h5>
+          </div>
+          {% if recent_records %}
+            <div class="table-responsive">
+              <table class="table table-sm">
+                <thead>
+                  <tr>
+                    <th>Patient</th>
+                    <th>Notes</th>
+                    <th>Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for rec in recent_records %}
+                    <tr>
+                      <td>{{ rec.mother.full_name }}</td>
+                      <td class="text-muted">{{ rec.notes|default:'-'|truncatechars:100 }}</td>
+                      <td>{{ rec.created_at|date:"Y-m-d" }}</td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <p class="text-muted">No recent records.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

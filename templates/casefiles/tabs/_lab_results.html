@@ -1,0 +1,46 @@
+<div class="d-flex justify-content-between align-items-center mb-2">
+  <h2 class="h5 mb-0">Lab & Test Results</h2>
+  <span class="badge text-bg-secondary">Lab Techs upload; Doctors review</span>
+</div>
+<div class="row g-3">
+  <div class="col-lg-7">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        {% if lab_results %}
+          <div class="list-group">
+            {% for r in lab_results %}
+              <div class="list-group-item">
+                <div class="d-flex justify-content-between align-items-center">
+                  <div class="fw-semibold">{{ r.test_type }} <span class="small text-muted">· {{ r.date_performed|date:'M d, Y' }}</span></div>
+                  <span class="badge text-bg-{% if r.status == 'COMPLETED' %}success{% elif r.status == 'REVIEWED' %}info{% else %}warning{% endif %}">{{ r.get_status_display }}</span>
+                </div>
+                <div class="small text-muted">Performed by {{ r.performed_by.full_name|default:r.performed_by.email }}</div>
+                {% if r.result_text %}<div class="mt-2"><span class="text-muted small">Result</span><div>{{ r.result_text|linebreaks }}</div></div>{% endif %}
+                {% if r.attachment %}
+                  <div class="mt-2"><a class="btn btn-sm btn-outline-secondary" href="{{ r.attachment.url }}" target="_blank"><i class="bi bi-download"></i> Download Attachment</a></div>
+                {% endif %}
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="p-3 text-muted">No lab results yet.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-5">
+    {% if user.role == 'LAB_TECH' %}
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <form hx-post="{% url 'casefile_lab_result_new' case_file.id %}" hx-target="#tab-content" hx-swap="innerHTML" enctype="multipart/form-data">
+          {% csrf_token %}
+          {{ form.as_p }}
+          <div class="d-grid mt-2">
+            <button class="btn btn-primary" type="submit"><i class="bi bi-save"></i> Save</button>
+          </div>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>

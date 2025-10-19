@@ -1,0 +1,73 @@
+<div class="d-flex justify-content-between align-items-center mb-2">
+  <h2 class="h5 mb-0">Prescriptions & Medications</h2>
+  <span class="badge text-bg-secondary">Doctors add; Pharmacists dispense/update</span>
+</div>
+<div class="row g-3">
+  <div class="col-lg-7">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        {% if prescriptions %}
+          <div class="table-responsive">
+            <table class="table table-sm align-middle">
+              <thead>
+                <tr>
+                  <th>Drug</th>
+                  <th>Dosage</th>
+                  <th>Frequency</th>
+                  <th>Duration</th>
+                  <th>Status</th>
+                  <th>By</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for p in prescriptions %}
+                <tr>
+                  <td>{{ p.drug_name }}</td>
+                  <td>{{ p.dosage }}</td>
+                  <td>{{ p.frequency }}</td>
+                  <td>{{ p.duration }}</td>
+                  <td>
+                    <span class="badge text-bg-{% if p.status == 'DISPENSED' %}success{% elif p.status == 'ISSUED' %}warning{% else %}secondary{% endif %}">{{ p.get_status_display }}</span>
+                  </td>
+                  <td class="small">{{ p.prescribing_by.full_name|default:p.prescribing_by.email }}</td>
+                  <td>
+                    {% if user.role == 'PHARMACIST' or user.role == 'DOCTOR' %}
+                    <form class="d-flex gap-1" hx-post="{% url 'casefile_prescription_status' p.id %}" hx-target="#tab-content" hx-swap="innerHTML">
+                      {% csrf_token %}
+                      <select class="form-select form-select-sm" name="status">
+                        <option value="PENDING" {% if p.status == 'PENDING' %}selected{% endif %}>Pending</option>
+                        <option value="ISSUED" {% if p.status == 'ISSUED' %}selected{% endif %}>Issued</option>
+                        <option value="DISPENSED" {% if p.status == 'DISPENSED' %}selected{% endif %}>Dispensed</option>
+                      </select>
+                      <button class="btn btn-sm btn-outline-primary" type="submit">Update</button>
+                    </form>
+                    {% endif %}
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="p-3 text-muted">No prescriptions yet.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-5">
+    {% if user.role == 'DOCTOR' %}
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <form hx-post="{% url 'casefile_prescription_new' case_file.id %}" hx-target="#tab-content" hx-swap="innerHTML">
+          {% csrf_token %}
+          {{ form.as_p }}
+          <div class="d-grid mt-2">
+            <button class="btn btn-primary" type="submit"><i class="bi bi-plus-circle"></i> Add Prescription</button>
+          </div>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>

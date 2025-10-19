@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+  <h2>Admin Dashboard</h2>
+  <div class="row mt-3">
+    <div class="col-md-3">
+      <div class="card text-bg-primary mb-3">
+        <div class="card-body">
+          <h5 class="card-title">Total Patients</h5>
+          <p class="card-text h3">{{ total_patients }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card text-bg-success mb-3">
+        <div class="card-body">
+          <h5 class="card-title">Total Births</h5>
+          <p class="card-text h3">{{ total_births }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card text-bg-warning mb-3">
+        <div class="card-body">
+          <h5 class="card-title">Active Immunizations</h5>
+          <p class="card-text h3">{{ active_immunizations }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card text-bg-danger mb-3">
+        <div class="card-body">
+          <h5 class="card-title">Missed Vaccinations</h5>
+          <p class="card-text h3">{{ missed_vaccinations }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% if income_total %}
+  <div class="row">
+    <div class="col-md-6">
+      <div class="card mb-3">
+        <div class="card-body">
+          <h5 class="card-title">Income</h5>
+          <p class="card-text h4">₦{{ income_total|floatformat:2 }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card mb-3">
+        <div class="card-body">
+          <h5 class="card-title">Outstanding Bills</h5>
+          <p class="card-text h4">₦{{ outstanding_total|floatformat:2 }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="d-flex gap-2 mb-3">
+    <a class="btn btn-outline-secondary" href="{% url 'admin_dashboard_export_appointments' %}">Export Appointments CSV</a>
+    <a class="btn btn-outline-secondary" href="{% url 'admin_dashboard_export_immunizations' %}">Export Immunizations CSV</a>
+  </div>
+
+  <div class="card">
+    <div class="card-body">
+      <h5 class="card-title">Upcoming Appointments</h5>
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th>Patient</th>
+            <th>Doctor</th>
+            <th>Type</th>
+            <th>Scheduled</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for a in upcoming_appointments %}
+          <tr>
+            <td>{{ a.patient.full_name }}</td>
+            <td>{% if a.doctor %}{{ a.doctor.email }}{% else %}-{% endif %}</td>
+            <td>{{ a.get_appointment_type_display }}</td>
+            <td>{{ a.scheduled_at|date:'Y-m-d H:i' }}</td>
+            <td>{{ a.get_status_display }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="5" class="text-center">No upcoming appointments</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

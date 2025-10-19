@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% block content %}
+  <div class="row">
+    <div class="col-lg-10 mx-auto">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="mb-0">Manage Immunizations — {{ baby.name }}</h4>
+        <div>
+          <a href="{% url 'immunization_schedule_all' %}" class="btn btn-outline-secondary btn-sm me-2">Back to All Schedules</a>
+          <a href="{% url 'immunization_baby_pdf' baby_id=baby.id %}" target="_blank" rel="noopener" class="btn btn-primary btn-sm"><i class="bi bi-filetype-pdf me-1"></i> Export PDF</a>
+        </div>
+      </div>
+
+      <div class="card card-shadow mb-4">
+        <div class="card-body">
+          <div class="mb-3 text-muted small">Mother: {{ baby.mother.full_name }} • DOB: {{ baby.date_of_birth|date:"Y-m-d" }}</div>
+          <h5 class="card-title">Add Immunization</h5>
+          <form method="post" class="row g-3">
+            {% csrf_token %}
+            <div class="col-md-6">
+              <label class="form-label">Immunization</label>
+              {{ form.master }}
+              {% for err in form.master.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Recommended Date (optional)</label>
+              {{ form.scheduled_date }}
+              {% for err in form.scheduled_date.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
+            </div>
+            <div class="col-12">
+              <label class="form-label">Notes</label>
+              {{ form.notes }}
+              {% for err in form.notes.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
+            </div>
+            <div class="col-12">
+              <button type="submit" name="add" value="1" class="btn btn-success">Add Immunization</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div class="card card-shadow">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">Existing Immunizations</h5>
+            <form method="get" class="row g-2 align-items-end">
+              <div class="col-auto">
+                <label class="form-label mb-0 small">Status</label>
+                <select name="status" class="form-select form-select-sm">
+                  <option value="ALL"{% if status_filter == 'ALL' %} selected{% endif %}>All</option>
+                  <option value="DUE"{% if status_filter == 'DUE' %} selected{% endif %}>Due</option>
+                  <option value="DONE"{% if status_filter == 'DONE' %} selected{% endif %}>Done</option>
+                  <option value="MISSED"{% if status_filter == 'MISSED' %} selected{% endif %}>Missed</option>
+                </select>
+              </div>
+              <div class="col-auto">
+                <label class="form-label mb-0 small">Sort</label>
+                <select name="sort" class="form-select form-select-sm">
+                  <option value="date"{% if sort_field == 'date' %} selected{% endif %}>Recommended Date</option>
+                  <option value="name"{% if sort_field == 'name' %} selected{% endif %}>Vaccine Name</option>
+                  <option value="status"{% if sort_field == 'status' %} selected{% endif %}>Status</option>
+                </select>
+              </div>
+              <div class="col-auto">
+                <label class="form-label mb-0 small">Order</label>
+                <select name="dir" class="form-select form-select-sm">
+                  <option value="asc"{% if sort_dir == 'asc' %} selected{% endif %}>Ascending</option>
+                  <option value="desc"{% if sort_dir == 'desc' %} selected{% endif %}>Descending</option>
+                </select>
+              </div>
+              <div class="col-auto">
+                <button type="submit" class="btn btn-outline-primary btn-sm">Apply</button>
+              </div>
+            </form>
+          </div>
+
+          {% if schedules %}
+            <div class="table-responsive mt-3">
+              <table class="table table-sm align-middle">
+                <thead>
+                  <tr>
+                    <th>Vaccine</th>
+                    <th>Recommended Date</th>
+                    <th>Status</th>
+                    <th>Actual Date Given</th>
+                    <th class="text-end">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for s in schedules %}
+                    <tr>
+                      <td>{{ s.vaccine_name }}</td>
+                      <td>{{ s.scheduled_date|date:"Y-m-d" }}</td>
+                      <td>{{ s.get_status_display }}</td>
+                      <td>{% if s.date_completed %}{{ s.date_completed|date:"Y-m-d" }}{% else %}-{% endif %}</td>
+                      <td class="text-end">
+                        <form method="post" class="d-inline">
+                          {% csrf_token %}
+                          <input type="hidden" name="remove_id" value="{{ s.id }}" />
+                          <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('Remove this immunization? This cannot be undone.')">Remove</button>
+                        </form>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <p class="text-muted mb-0">No immunizations yet for this baby.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

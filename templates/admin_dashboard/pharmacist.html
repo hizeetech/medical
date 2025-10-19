@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block content %}
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+      <h2 class="mb-0">Pharmacist Dashboard</h2>
+      <p class="text-muted">Review invoices and prescriptions.</p>
+    </div>
+    <div class="d-flex align-items-center">
+      <a class="btn btn-outline-primary me-3" href="{% url 'invoice_list' %}"><i class="bi bi-receipt me-1"></i> Billing</a>
+      <form action="{% url 'casefiles_search' %}" method="get" class="d-flex" role="search">
+        <input type="text" name="q" class="form-control form-control-sm me-2" placeholder="Member ID (e.g., MED-XXXXXX)" aria-label="Member ID">
+        <button class="btn btn-outline-secondary btn-sm" type="submit"><i class="bi bi-search me-1"></i> Case Files</button>
+        <a class="btn btn-outline-primary btn-sm ms-2" href="{% url 'casefiles_search' %}"><i class="bi bi-folder2-open me-1"></i> Browse</a>
+      </form>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-md-6">
+      <div class="card card-shadow h-100">
+        <div class="card-body">
+          <div class="d-flex align-items-center mb-2">
+            <i class="bi bi-cash-stack text-primary me-2"></i>
+            <h5 class="card-title mb-0">Recent Invoices</h5>
+          </div>
+          {% if invoices %}
+            <div class="table-responsive">
+              <table class="table table-sm">
+                <thead>
+                  <tr>
+                    <th>Reference</th>
+                    <th>Patient</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for inv in invoices %}
+                    <tr>
+                      <td>{{ inv.reference }}</td>
+                      <td>{{ inv.patient.full_name }}</td>
+                      <td>₦{{ inv.amount }}</td>
+                      <td><span class="badge bg-secondary">{{ inv.get_status_display }}</span></td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <p class="text-muted">No invoices available.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="card card-shadow h-100">
+        <div class="card-body">
+          <div class="d-flex align-items-center mb-2">
+            <i class="bi bi-capsule text-primary me-2"></i>
+            <h5 class="card-title mb-0">Recent Prescriptions</h5>
+          </div>
+          {% if prescriptions %}
+            <ul class="list-group list-group-flush">
+              {% for p in prescriptions %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                  <div>
+                    <div class="fw-semibold">{{ p.record.mother.full_name }}</div>
+                    <div class="text-muted small">{{ p.description|default:'Prescription'|truncatechars:80 }}</div>
+                  </div>
+                  <a href="{{ p.file.url }}" target="_blank" class="btn btn-sm btn-outline-primary">View</a>
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="text-muted">No recent prescriptions uploaded.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block content %}
+  <div class="d-flex align-items-center mb-3">
+    <h3 class="mb-0">{{ page.title|default:"Postnatal Care" }}</h3>
+  </div>
+  {% if page and page.hero_image %}
+    <img src="{{ page.hero_image.url }}" class="img-fluid rounded mb-3" alt="{{ page.title }}">
+  {% endif %}
+  {% if page and page.body %}
+    <div class="content-body">{{ page.body|safe }}</div>
+  {% else %}
+    <p class="text-muted">No postnatal content yet. Please add it in Admin → Care Pages.</p>
+  {% endif %}
+{% endblock %}

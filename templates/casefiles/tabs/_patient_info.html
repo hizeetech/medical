@@ -1,0 +1,27 @@
+<div class="card shadow-sm">
+  <div class="card-body">
+    <div class="row g-3">
+      <div class="col-md-6">
+        <div><span class="text-muted small">Full Name</span><div class="fw-semibold">{{ patient.full_name }}</div></div>
+        <div class="mt-2"><span class="text-muted small">Gender</span><div class="fw-semibold">{{ patient.gender|default:'Female' }}</div></div>
+        <div class="mt-2"><span class="text-muted small">Age</span><div class="fw-semibold">{{ patient.age|default:'—' }}</div></div>
+      </div>
+      <div class="col-md-6">
+        <div><span class="text-muted small">Member ID</span><div class="fw-semibold">{{ patient.member_id }}</div></div>
+        <div class="mt-2"><span class="text-muted small">NHIS Number</span><div class="fw-semibold">{{ patient.nhis_number|default:'—' }}</div></div>
+        <div class="mt-2"><span class="text-muted small">Next of Kin</span><div class="fw-semibold">{{ patient.next_of_kin_name|default:'—' }} · {{ patient.next_of_kin_phone|default:'' }}</div></div>
+      </div>
+    </div>
+    <hr>
+    <div class="row g-3">
+      <div class="col-md-6">
+        <div><span class="text-muted small">Phone</span><div class="fw-semibold">{{ patient.phone }}</div></div>
+        <div class="mt-2"><span class="text-muted small">Email</span><div class="fw-semibold">{{ patient.email|default:'—' }}</div></div>
+        <div class="mt-2"><span class="text-muted small">Address</span><div class="fw-semibold">{{ patient.address|default:'—' }}</div></div>
+      </div>
+      <div class="col-md-6">
+        <a class="btn btn-outline-primary" href="/profile/"><i class="bi bi-person-lines-fill"></i> Open Patient Profile</a>
+      </div>
+    </div>
+  </div>
+</div>

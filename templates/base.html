@@ -1,0 +1,115 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block head_title %}Medical Care{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="{% static 'css/styles.css' %}" rel="stylesheet">
+  </head>
+  <body class="bg-light">
+    <!-- Top info bar -->
+    <div class="topbar bg-primary text-white small">
+      <div class="container d-flex justify-content-between align-items-center py-1">
+        <div class="d-flex align-items-center gap-3">
+          <span><i class="bi bi-telephone me-1"></i> +234 (803) 057‑2070</span>
+          <span class="d-none d-md-inline"><i class="bi bi-envelope me-1"></i> support.lekan@medical.com</span>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          {% if user.is_authenticated %}
+            <a class="text-white text-decoration-none opacity-75" href="/dashboard/"><i class="bi bi-person-circle me-1"></i> My Dashboard</a>
+          {% else %}
+            <a class="text-white text-decoration-none opacity-75" href="/accounts/login/">Patient Login</a>
+            <span class="opacity-50">|</span>
+            <a class="text-white text-decoration-none opacity-75" href="/accounts/signup/">Sign Up</a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Main navbar (MedPark-like: white, sticky, dropdowns) -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white sticky-top border-bottom shadow-sm">
+      <div class="container">
+        <a class="navbar-brand fw-semibold d-flex align-items-center" href="/">
+          <i class="bi bi-heart-pulse-fill me-2 text-primary"></i>
+          <span>Medical</span>
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav" aria-controls="nav" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="nav">
+          <ul class="navbar-nav me-auto">
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" id="careDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                Disease & Treatment
+              </a>
+              <ul class="dropdown-menu" aria-labelledby="careDropdown">
+                <li><a class="dropdown-item" href="{% url 'antenatal_care' %}">Antenatal Care</a></li>
+                <li><a class="dropdown-item" href="{% url 'postnatal_care' %}">Postnatal Care</a></li>
+                <li><a class="dropdown-item" href="{% url 'newborn_immunization' %}">Newborn Immunization</a></li>
+              </ul>
+            </li>
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" id="servicesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                Services
+              </a>
+              <ul class="dropdown-menu" aria-labelledby="servicesDropdown">
+                <li><a class="dropdown-item" href="{% url 'appointments_list' %}">Appointments</a></li>
+                <li><a class="dropdown-item" href="{% url 'profile_edit' %}">Mother Profile</a></li>
+                <li><a class="dropdown-item" href="{% url 'baby_profile' %}">Baby Profile</a></li>
+                <li><a class="dropdown-item" href="{% url 'centers_list' %}">Centers &amp; Clinics</a></li>
+                <li><a class="dropdown-item" href="{% url 'casefiles_search' %}">Case Files</a></li>
+              </ul>
+            </li>
+            <li class="nav-item"><a class="nav-link" href="{% url 'find_doctor' %}">Find a Doctor</a></li>
+            <li class="nav-item"><a class="nav-link" href="{% url 'articles' %}">Articles</a></li>
+          </ul>
+
+          <!-- Search (non-functional placeholder) -->
+          <form class="d-none d-lg-flex" role="search">
+            <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
+            <button class="btn btn-outline-primary" type="submit">Search</button>
+          </form>
+
+          <ul class="navbar-nav ms-lg-3 align-items-lg-center">
+            <li class="nav-item me-lg-2"><a class="btn btn-primary btn-appointment" href="{% url 'appointment_new' %}"><i class="bi bi-calendar-event me-1"></i> Book Appointment</a></li>
+            {% if user.is_authenticated %}
+              <li class="nav-item"><a class="nav-link" href="/dashboard/">Dashboard</a></li>
+              <li class="nav-item"><a class="nav-link" href="/profile/">Profile</a></li>
+              <li class="nav-item"><a class="nav-link" href="/accounts/logout/">Logout</a></li>
+            {% else %}
+              <li class="nav-item"><a class="nav-link" href="/accounts/login/">Login</a></li>
+              <li class="nav-item"><a class="btn btn-outline-primary ms-lg-2" href="/accounts/signup/">Sign Up</a></li>
+            {% endif %}
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <main class="container py-4">
+      {% if messages %}
+        <div class="mb-3">
+          {% for message in messages %}
+            <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
+              {{ message }}
+              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      {% block content %}{% endblock %}
+    </main>
+
+    <footer class="border-top py-4 bg-white">
+      <div class="container text-center text-muted small">
+        <div>© {{ now|date:"Y" }} Medical Care. Antenatal & Postnatal Management.</div>
+      </div>
+    </footer>
+
+    <script src="https://unpkg.com/htmx.org@1.9.11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>

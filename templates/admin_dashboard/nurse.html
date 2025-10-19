@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block content %}
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+      <h2 class="mb-0">Nurse Dashboard</h2>
+      <p class="text-muted">Manage immunizations and baby records.</p>
+    </div>
+    <div class="d-flex align-items-center">
+      <a class="btn btn-outline-primary me-2" href="{% url 'immunization_schedule_all' %}"><i class="bi bi-shield-check me-1"></i> All Schedules</a>
+      <a class="btn btn-primary me-3" href="{% url 'admin_dashboard_export_immunizations' %}"><i class="bi bi-download me-1"></i> Export CSV</a>
+      <form action="{% url 'casefiles_search' %}" method="get" class="d-flex" role="search">
+        <input type="text" name="q" class="form-control form-control-sm me-2" placeholder="Member ID (e.g., MED-XXXXXX)" aria-label="Member ID">
+        <button class="btn btn-outline-secondary btn-sm" type="submit"><i class="bi bi-search me-1"></i> Case Files</button>
+        <a class="btn btn-outline-primary btn-sm ms-2" href="{% url 'casefiles_search' %}"><i class="bi bi-folder2-open me-1"></i> Browse</a>
+      </form>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-md-6">
+      <div class="card card-shadow h-100">
+        <div class="card-body">
+          <div class="d-flex align-items-center mb-2">
+            <i class="bi bi-bell text-primary me-2"></i>
+            <h5 class="card-title mb-0">Due Immunizations</h5>
+          </div>
+          {% if due_schedules %}
+            <ul class="list-group list-group-flush">
+              {% for s in due_schedules %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                  <div>
+                    <div class="fw-semibold">{{ s.baby.name }} • {{ s.baby.mother.full_name }}</div>
+                    <div class="text-muted small">{{ s.vaccine_name }} • {{ s.scheduled_date|date:"Y-m-d" }}</div>
+                  </div>
+                  <span class="badge bg-info">Due</span>
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="text-muted">No due immunizations.</p>
+          {% endif %}
+          <a href="{% url 'immunization_schedule_all' %}" class="btn btn-outline-primary btn-sm mt-2">View all</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="card card-shadow h-100">
+        <div class="card-body">
+          <div class="d-flex align-items-center mb-2">
+            <i class="bi bi-x-circle text-danger me-2"></i>
+            <h5 class="card-title mb-0">Missed Immunizations</h5>
+          </div>
+          {% if missed_schedules %}
+            <ul class="list-group list-group-flush">
+              {% for s in missed_schedules %}
+                <li class="list-group-item">
+                  <div class="fw-semibold">{{ s.baby.name }} • {{ s.baby.mother.full_name }}</div>
+                  <div class="text-muted small">{{ s.vaccine_name }} • {{ s.scheduled_date|date:"Y-m-d" }}</div>
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="text-muted">No missed immunizations.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12">
+      <div class="card card-shadow">
+        <div class="card-body">
+          <div class="d-flex align-items-center mb-2">
+            <i class="bi bi-people text-primary me-2"></i>
+            <h5 class="card-title mb-0">Recent Babies</h5>
+          </div>
+          {% if recent_babies %}
+            <div class="table-responsive">
+              <table class="table table-sm">
+                <thead>
+                  <tr>
+                    <th>Baby</th>
+                    <th>Mother</th>
+                    <th>DOB</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for baby in recent_babies %}
+                    <tr>
+                      <td>{{ baby.name }}</td>
+                      <td>{{ baby.mother.full_name }}</td>
+                      <td>{{ baby.date_of_birth|date:"Y-m-d" }}</td>
+                      <td>
+                        <a class="btn btn-sm btn-outline-primary" href="{% url 'immunization_manage_baby' baby.id %}">Manage Immunizations</a>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <p class="text-muted">No recent records.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

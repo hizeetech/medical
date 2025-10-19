@@ -1,0 +1,12 @@
+{% extends "account/base.html" %}
+{% load i18n %}
+
+{% block account_title %}{% trans "Verification Sent" %}{% endblock %}
+
+{% block account_content %}
+  <div class="text-center py-2">
+    <h3 class="mb-3">{% trans "Please check your inbox" %}</h3>
+    <p class="text-muted">{% trans "We’ve emailed you a link to verify your address." %}</p>
+    <a class="btn btn-primary mt-2" href="{% url 'account_login' %}">{% trans "Back to Sign In" %}</a>
+  </div>
+{% endblock %}

@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block content %}
+  <section class="hero hero-gradient py-5 rounded-3 mb-4">
+    <div class="container">
+      <div class="row align-items-center">
+        <div class="col-lg-7">
+          <h1 class="display-6 fw-bold mb-3">{{ homepage.hero_title|default:"Antenatal & Postnatal Care System" }}</h1>
+          <p class="lead mb-4">{{ homepage.hero_subtitle|default:"Plan appointments, track vitals, manage postnatal follow‑ups, and stay on top of newborn immunizations — all in one place." }}</p>
+          {% if user.is_authenticated %}
+            <a class="btn btn-light text-primary btn-lg me-2 shadow-sm" href="/dashboard/">Go to Dashboard</a>
+          {% else %}
+            <a class="btn btn-primary btn-lg me-2 shadow-sm" href="/accounts/login/">Login</a>
+            <a class="btn btn-outline-light btn-lg shadow-sm" href="/accounts/signup/">Create account</a>
+          {% endif %}
+        </div>
+        <div class="col-lg-5 text-end">
+          {% if homepage and homepage.hero_image %}
+            <img src="{{ homepage.hero_image.url }}" alt="Hero" class="img-fluid hero-image">
+          {% else %}
+            <i class="bi bi-heart-pulse display-1 text-white opacity-75"></i>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="row g-3">
+    <div class="col-md-4">
+      <div class="card card-shadow h-100">
+        <div class="card-body">
+          <div class="d-flex align-items-center mb-2">
+            <i class="bi bi-calendar-event text-primary me-2"></i>
+            <h5 class="card-title mb-0">Appointments</h5>
+          </div>
+          <p class="text-muted mb-0">Schedule antenatal, postnatal, and immunization visits with ease.</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card card-shadow h-100">
+        <div class="card-body">
+          <div class="d-flex align-items-center mb-2">
+            <i class="bi bi-thermometer-half text-primary me-2"></i>
+            <h5 class="card-title mb-0">Vitals Tracking</h5>
+          </div>
+          <p class="text-muted mb-0">Record and monitor key health indicators and danger signs.</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card card-shadow h-100">
+        <div class="card-body">
+          <div class="d-flex align-items-center mb-2">
+            <i class="bi bi-shield-check text-primary me-2"></i>
+            <h5 class="card-title mb-0">Newborn Immunization</h5>
+          </div>
+          <p class="text-muted mb-0">Keep up with vaccine schedules and never miss a dose.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

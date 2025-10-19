@@ -1,0 +1,17 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+  <h1>Test Email</h1>
+  {% if messages %}
+    {% for message in messages %}
+      <div class="messagelist">
+        <div class="{{ message.tags }}">{{ message }}</div>
+      </div>
+    {% endfor %}
+  {% endif %}
+  <form method="post" novalidate>
+    {% csrf_token %}
+    {{ form.as_p }}
+    <input type="submit" class="default" value="Send">
+  </form>
+  <p class="help">This sends an email using your configured backend and logs the result in NotificationLog as the current admin user.</p>
+{% endblock %}

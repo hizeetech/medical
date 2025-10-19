@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container my-4">
+  <h1 class="mb-3">{{ center.name }}</h1>
+
+  <div class="mb-4">
+    {{ center.overview|linebreaks }}
+  </div>
+
+  <h3 class="mt-5">Related Doctors</h3>
+
+  {% if doctor_schedule_pairs %}
+    {% for pair in doctor_schedule_pairs %}
+      {% with doctor=pair.doctor %}
+      <div class="card doctor-card shadow-sm mb-4">
+        <div class="card-body">
+          <div class="d-flex align-items-start">
+            <div class="me-3 doctor-avatar">
+              {% if doctor.avatar %}
+                <img src="{{ doctor.avatar.url }}" alt="{{ doctor.get_full_name|default:doctor.email }}" class="img-fluid rounded">
+              {% else %}
+                <div class="bg-light border rounded d-flex align-items-center justify-content-center placeholder-avatar">
+                  <span class="text-muted">No image</span>
+                </div>
+              {% endif %}
+            </div>
+            <div class="flex-grow-1">
+              <h5 class="card-title mb-2">{{ doctor.get_full_name|default:doctor.email }}</h5>
+
+              <div class="row text-muted small mb-3">
+                <div class="col-md-6 mb-2">
+                  <div><strong>Specialty</strong></div>
+                  <div>{{ doctor.specialty|default:"" }}</div>
+                </div>
+                <div class="col-md-6 mb-2">
+                  <div><strong>Sub Specialty</strong></div>
+                  <div>{{ doctor.sub_specialty|default:"" }}</div>
+                </div>
+              </div>
+
+              {% if doctor.treatments_services %}
+                <div class="mb-3">
+                  <div class="text-muted small"><strong>Treatments And Services</strong></div>
+                  <div>{{ doctor.treatments_services }}</div>
+                </div>
+              {% endif %}
+
+              {% if pair.slots %}
+                <div class="doctor-slots table-responsive mt-3">
+                  <table class="table table-sm align-middle mb-0">
+                    <thead>
+                      <tr>
+                        {% for slot in pair.slots %}
+                          <th class="text-nowrap">{{ slot.date_label }}</th>
+                        {% endfor %}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        {% for slot in pair.slots %}
+                          <td class="text-nowrap">
+                            {% if slot.times %}
+                              {% for t in slot.times %}
+                                <div>{{ t }}</div>
+                              {% endfor %}
+                            {% else %}
+                              <span class="text-muted">—</span>
+                            {% endif %}
+                          </td>
+                        {% endfor %}
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              {% else %}
+                <p class="text-muted">No schedule available.</p>
+              {% endif %}
+            </div>
+            <div class="ms-3 d-flex align-items-start">
+              <a href="{% url 'appointment_new' %}?doctor={{ doctor.get_full_name|default:doctor.email|slugify }}&step=1" class="btn btn-warning btn-appointment">Request an Appointment</a>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endwith %}
+    {% endfor %}
+  {% else %}
+    <p class="text-muted">No related doctors found.</p>
+  {% endif %}
+
+</div>
+{% endblock %}

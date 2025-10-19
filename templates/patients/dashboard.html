@@ -1,0 +1,260 @@
+{% extends "base.html" %}
+{% block content %}
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+      <h2 class="mb-0">Your Dashboard</h2>
+      <p class="text-muted">Welcome, {{ request.user.email }}.</p>
+    </div>
+    <div>
+      <a class="btn btn-outline-primary me-2" href="{% url 'profile_edit' %}"><i class="bi bi-person-lines-fill me-1"></i> Profile</a>
+      <a class="btn btn-primary" href="{% url 'appointment_new' %}"><i class="bi bi-plus-lg me-1"></i> New Appointment</a>
+    </div>
+  </div>
+
+  <!-- Profile summary card -->
+  <div class="row g-3 mb-1">
+    <div class="col-12">
+      <div class="card card-shadow">
+        <div class="card-body d-flex align-items-center">
+          {% if profile.profile_picture %}
+            <img src="{{ profile.profile_picture.url }}" alt="Profile picture" class="rounded-circle me-3" style="width: 72px; height: 72px; object-fit: cover;">
+          {% else %}
+            <div class="bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center rounded-circle me-3" style="width: 72px; height: 72px;">
+              <i class="bi bi-person-circle" style="font-size: 2rem;"></i>
+            </div>
+          {% endif %}
+          <div>
+            <div class="d-flex align-items-center">
+              <h5 class="mb-0">{{ profile.full_name|default:'Your Name' }}</h5>
+              <a href="{% url 'profile_edit' %}" class="btn btn-sm btn-outline-primary ms-3">Edit Profile</a>
+              <a href="{% url 'member_card' %}" target="_blank" rel="noopener" class="btn btn-sm btn-primary ms-2"><i class="bi bi-card-image me-1"></i> View/Download Member Card</a>
+            </div>
+            <div class="text-muted small mt-1">Member ID: {{ profile.member_id }}</div>
+            <div class="text-muted small mt-1">{{ profile.phone_number|default:request.user.phone_number }} • {{ profile.address|default:'No address yet' }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-md-6">
+      <div class="card card-shadow h-100">
+        <div class="card-body">
+          <div class="d-flex align-items-center mb-2">
+            <i class="bi bi-calendar-event text-primary me-2"></i>
+            <h5 class="card-title mb-0">Next Appointment</h5>
+          </div>
+          {% if next_appointment %}
+            <p class="text-muted mb-2">Next: {{ next_appointment.scheduled_at|date:"Y-m-d H:i" }} ({{ next_appointment.get_appointment_type_display }})</p>
+          {% else %}
+            <p class="text-muted">No upcoming appointments yet.</p>
+          {% endif %}
+          <a href="{% url 'appointments_list' %}" class="btn btn-outline-primary btn-sm">Schedule</a>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card card-shadow h-100">
+        <div class="card-body">
+          <div class="d-flex align-items-center mb-2">
+            <i class="bi bi-clipboard2-pulse text-primary me-2"></i>
+            <h5 class="card-title mb-0">Postnatal Care Plan</h5>
+          </div>
+          {% if latest_postnatal %}
+            <p class="text-muted mb-2">Latest review: {{ latest_postnatal.created_at|date:"Y-m-d" }}</p>
+          {% else %}
+            <p class="text-muted">Your postnatal care plan will appear here.</p>
+          {% endif %}
+          <a href="{% url 'postnatal_plan' %}" class="btn btn-outline-primary btn-sm">View details</a>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card card-shadow h-100">
+        <div class="card-body">
+          <div class="d-flex align-items-center mb-2">
+            <i class="bi bi-thermometer-half text-primary me-2"></i>
+            <h5 class="card-title mb-0">Recent Vitals</h5>
+          </div>
+          {% if recent_vitals %}
+            <p class="text-muted mb-2">BP: {{ recent_vitals.blood_pressure_systolic }}/{{ recent_vitals.blood_pressure_diastolic }} • Pulse: {{ recent_vitals.pulse }} • Temp: {{ recent_vitals.temperature_c }}°C</p>
+          {% else %}
+            <p class="text-muted">No vitals recorded.</p>
+          {% endif %}
+          <a href="{% url 'record_vitals' %}" class="btn btn-outline-primary btn-sm">Record vitals</a>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card card-shadow h-100">
+        <div class="card-body">
+          <div class="d-flex align-items-center mb-2">
+            <i class="bi bi-shield-check text-primary me-2"></i>
+            <h5 class="card-title mb-0">Immunization Schedule</h5>
+          </div>
+          {% if next_immunization %}
+            <p class="text-muted mb-2">Next vaccine: {{ next_immunization.scheduled_at|date:"Y-m-d" }}</p>
+          {% else %}
+            <p class="text-muted">No immunizations due.</p>
+          {% endif %}
+          <a href="{% url 'immunization_schedule' %}" class="btn btn-outline-primary btn-sm">View schedule</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Billing & Invoices -->
+  <div class="row g-3 mt-1">
+    <div class="col-md-6">
+      <div class="card card-shadow h-100">
+        <div class="card-body">
+          <div class="d-flex align-items-center mb-2">
+            <i class="bi bi-receipt text-primary me-2"></i>
+            <h5 class="card-title mb-0">Outstanding Invoices</h5>
+          </div>
+          {% if outstanding_invoices %}
+            <ul class="list-group list-group-flush">
+              {% for inv in outstanding_invoices %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                  <div>
+                    <div class="fw-semibold">{{ inv.reference }}</div>
+                    <div class="text-muted small">{{ inv.description|default:'No description' }}</div>
+                  </div>
+                  <div class="text-end">
+                    <div>₦{{ inv.amount }}</div>
+                    <div class="badge bg-warning text-dark mt-1">{{ inv.status }}</div>
+                  </div>
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="text-muted mb-0">No outstanding invoices.</p>
+          {% endif %}
+          <a href="{% url 'invoice_list' %}" class="btn btn-outline-primary btn-sm mt-2">View all invoices</a>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card card-shadow h-100">
+        <div class="card-body">
+          <div class="d-flex align-items-center mb-2">
+            <i class="bi bi-cash-coin text-primary me-2"></i>
+            <h5 class="card-title mb-0">Recent Invoices</h5>
+          </div>
+          {% if recent_invoices %}
+            <ul class="list-group list-group-flush">
+              {% for inv in recent_invoices %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                  <div>
+                    <div class="fw-semibold">{{ inv.reference }}</div>
+                    <div class="text-muted small">{{ inv.created_at|date:"Y-m-d" }}</div>
+                  </div>
+                  <div class="text-end">
+                    <div>₦{{ inv.amount }}</div>
+                    <div class="badge bg-secondary mt-1">{{ inv.status }}</div>
+                  </div>
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="text-muted mb-0">No invoices yet.</p>
+          {% endif %}
+          <a href="{% url 'invoice_list' %}" class="btn btn-outline-primary btn-sm mt-2">Go to Billing</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Biodata modal for newly signed-up users -->
+  <div class="modal fade" id="biodataModal" tabindex="-1" aria-labelledby="biodataModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="biodataModalLabel">Complete Your Bio-data</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <form method="post" action="{% url 'profile_complete' %}" enctype="multipart/form-data">
+          {% csrf_token %}
+          <div class="modal-body">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label">Full Name</label>
+                {{ biodata_form.full_name }}
+                {% for err in biodata_form.full_name.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Age</label>
+                {{ biodata_form.age }}
+                {% for err in biodata_form.age.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Phone Number</label>
+                {{ biodata_form.phone_number }}
+                {% for err in biodata_form.phone_number.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Marital Status</label>
+                {{ biodata_form.marital_status }}
+                {% for err in biodata_form.marital_status.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Occupation</label>
+                {{ biodata_form.occupation }}
+                {% for err in biodata_form.occupation.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Blood Type</label>
+                {{ biodata_form.blood_type }}
+                {% for err in biodata_form.blood_type.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
+              </div>
+              <div class="col-12">
+                <label class="form-label">Address</label>
+                {{ biodata_form.address }}
+                {% for err in biodata_form.address.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
+              </div>
+              <div class="col-12">
+                <label class="form-label">Allergies</label>
+                {{ biodata_form.allergies }}
+                {% for err in biodata_form.allergies.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
+              </div>
+              <div class="col-12">
+                <label class="form-label">Previous Pregnancies</label>
+                {{ biodata_form.previous_pregnancies }}
+                {% for err in biodata_form.previous_pregnancies.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
+              </div>
+              <div class="col-12">
+                <label class="form-label">Existing Conditions</label>
+                {{ biodata_form.existing_conditions }}
+                {% for err in biodata_form.existing_conditions.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
+              </div>
+              <div class="col-12">
+                <label class="form-label">Emergency Contact</label>
+                {{ biodata_form.emergency_contact }}
+                {% for err in biodata_form.emergency_contact.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
+              </div>
+              <div class="col-12">
+                <label class="form-label">Profile Picture</label>
+                {{ biodata_form.profile_picture }}
+                {% for err in biodata_form.profile_picture.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="submit" class="btn btn-primary">Save Bio-data</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  {% if show_biodata_modal %}
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        var modal = new bootstrap.Modal(document.getElementById('biodataModal'));
+        modal.show();
+      });
+    </script>
+  {% endif %}
+{% endblock %}
