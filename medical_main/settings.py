@@ -199,6 +199,10 @@ EMAIL_USE_SSL = os.getenv('EMAIL_USE_SSL', 'False').lower() == 'true'
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
 
+# Force console email backend in development to avoid SMTP failures
+if DEBUG:
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
 # SMS (EbulkSMS) credentials
 EBULKSMS_USERNAME = os.getenv('EBULKSMS_USERNAME', '')
 EBULKSMS_API_KEY = os.getenv('EBULKSMS_API_KEY', '')

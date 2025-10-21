@@ -51,7 +51,7 @@
                   <div class="small text-muted">{{ s.scheduled_date|date:'M d, Y' }} · {{ s.get_status_display }}</div>
                 </div>
                 {% if s.status == 'DUE' %}
-                  <span class="badge text-bg-warning">Due</span>
+                  <span class="badge text-bg-warning">Pending</span>
                 {% elif s.status == 'MISSED' %}
                   <span class="badge text-bg-danger">Missed</span>
                 {% else %}

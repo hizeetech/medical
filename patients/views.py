@@ -10,7 +10,7 @@ from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 from reportlab.lib.units import mm
 from reportlab.lib.utils import ImageReader
-from datetime import datetime
+from datetime import datetime, date
 from barcode import Code128
 from barcode.writer import ImageWriter
 
@@ -31,10 +31,23 @@ def dashboard(request):
     try:
         from appointments.models import Appointment
         next_appointment = Appointment.objects.filter(patient=profile, status='SCHEDULED').order_by('scheduled_at').first()
-        next_immunization = Appointment.objects.filter(patient=profile, appointment_type='IMMUNIZATION', status='SCHEDULED').order_by('scheduled_at').first()
     except Exception:
         next_appointment = None
+
+    # Immunization: compute from baby schedules, not appointments
+    try:
+        from immunization.models import ImmunizationSchedule
+        today = date.today()
+        qs = ImmunizationSchedule.objects.select_related('baby').filter(baby__mother=profile)
+        next_immunization = qs.filter(status='DUE', scheduled_date__gte=today).order_by('scheduled_date').first()
+        upcoming_immunizations = qs.filter(status='DUE', scheduled_date__gte=today).order_by('scheduled_date')[:5]
+        completed_immunizations = qs.filter(status='DONE').order_by('-date_completed', '-scheduled_date')[:5]
+        missed_immunizations = qs.filter(status='MISSED').order_by('-scheduled_date')[:5]
+    except Exception:
         next_immunization = None
+        upcoming_immunizations = []
+        completed_immunizations = []
+        missed_immunizations = []
 
     recent_vitals = VitalSigns.objects.filter(mother=profile).order_by('-recorded_at').first()
     latest_postnatal = PostnatalCareRecord.objects.filter(mother=profile).order_by('-created_at').first()
@@ -56,6 +69,9 @@ def dashboard(request):
         'recent_vitals': recent_vitals,
         'latest_postnatal': latest_postnatal,
         'next_immunization': next_immunization,
+        'upcoming_immunizations': upcoming_immunizations,
+        'completed_immunizations': completed_immunizations,
+        'missed_immunizations': missed_immunizations,
         'recent_invoices': recent_invoices,
         'outstanding_invoices': outstanding_invoices,
     })

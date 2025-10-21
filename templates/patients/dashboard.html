@@ -94,11 +94,56 @@
             <h5 class="card-title mb-0">Immunization Schedule</h5>
           </div>
           {% if next_immunization %}
-            <p class="text-muted mb-2">Next vaccine: {{ next_immunization.scheduled_at|date:"Y-m-d" }}</p>
+            <p class="text-muted mb-2">Next vaccine: <span class="fw-semibold">{{ next_immunization.vaccine_name }}</span> for <span class="fw-semibold">{{ next_immunization.baby.name }}</span> on {{ next_immunization.scheduled_date|date:"Y-m-d" }}</p>
           {% else %}
-            <p class="text-muted">No immunizations due.</p>
+            <p class="text-muted">No immunizations pending.</p>
           {% endif %}
-          <a href="{% url 'immunization_schedule' %}" class="btn btn-outline-primary btn-sm">View schedule</a>
+          {% if upcoming_immunizations %}
+            <ul class="list-group list-group-flush small">
+              {% for s in upcoming_immunizations %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                  <div>
+                    <span class="text-primary"><i class="bi bi-hourglass-split me-1"></i></span>
+                    {{ s.vaccine_name }} • {{ s.baby.name }}
+                  </div>
+                  <div class="text-muted">{{ s.scheduled_date|date:"Y-m-d" }}</div>
+                </li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+          {% if completed_immunizations %}
+            <div class="mt-2">
+              <div class="text-muted small mb-1">Completed</div>
+              <ul class="list-group list-group-flush small">
+                {% for s in completed_immunizations %}
+                  <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                      <span class="text-success"><i class="bi bi-check-circle me-1"></i></span>
+                      {{ s.vaccine_name }} • {{ s.baby.name }}
+                    </div>
+                    <div class="text-muted">{{ s.date_completed|default:s.scheduled_date|date:"Y-m-d" }}</div>
+                  </li>
+                {% endfor %}
+              </ul>
+            </div>
+          {% endif %}
+          {% if missed_immunizations %}
+            <div class="mt-2">
+              <div class="text-muted small mb-1">Missed</div>
+              <ul class="list-group list-group-flush small">
+                {% for s in missed_immunizations %}
+                  <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                      <span class="text-warning"><i class="bi bi-exclamation-triangle me-1"></i></span>
+                      {{ s.vaccine_name }} • {{ s.baby.name }}
+                    </div>
+                    <div class="text-muted">{{ s.scheduled_date|date:"Y-m-d" }}</div>
+                  </li>
+                {% endfor %}
+              </ul>
+            </div>
+          {% endif %}
+          <a href="{% url 'immunization_schedule' %}" class="btn btn-outline-primary btn-sm mt-2">View full schedule</a>
         </div>
       </div>
     </div>

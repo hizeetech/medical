@@ -146,16 +146,112 @@ def send_appointment_reminder(appointment_id: int):
 
 
 @shared_task
-def send_daily_immunization_reminders():
-    today = date.today()
-    end = today + timedelta(days=3)
+def send_daily_immunization_pre3():
+    # 3 days before due date
+    target = date.today() + timedelta(days=3)
     qs = ImmunizationSchedule.objects.select_related('baby', 'baby__mother', 'baby__mother__user')\
-        .filter(status='DUE', scheduled_date__range=(today, end))
+        .filter(status='DUE', scheduled_date=target)
     count = 0
     for sched in qs:
-        send_immunization_reminder.delay(sched.pk)
+        mother = sched.baby.mother
+        user = mother.user
+        email = getattr(user, 'email', '')
+        phone = mother.phone_number or getattr(user, 'phone_number', '')
+        subject = f"In 3 days: {sched.vaccine_name} for {sched.baby.name}"
+        html = f"""
+        <p>Hello {mother.full_name},</p>
+        <p>This is a reminder that {sched.vaccine_name} for {sched.baby.name} is scheduled on {sched.scheduled_date:%Y-%m-%d} (in 3 days).</p>
+        """
+        ok_email = send_email(email, subject, html)
+        try:
+            NotificationLog.objects.create(recipient=user, channel='EMAIL', type='REMINDER', message=subject, success=ok_email, meta={'backend': settings.EMAIL_BACKEND})
+        except Exception:
+            pass
+        sms_text = f"In 3 days: {sched.baby.name} • {sched.vaccine_name} on {sched.scheduled_date:%Y-%m-%d}"
+        ok_sms, meta_sms = send_sms(phone, sms_text)
+        try:
+            NotificationLog.objects.create(recipient=user, channel='SMS', type='REMINDER', message=sms_text, success=ok_sms, meta=meta_sms)
+        except Exception:
+            pass
         count += 1
     return count
+
+
+@shared_task
+def send_daily_immunization_today():
+    # On exact date
+    target = date.today()
+    qs = ImmunizationSchedule.objects.select_related('baby', 'baby__mother', 'baby__mother__user')\
+        .filter(status='DUE', scheduled_date=target)
+    count = 0
+    for sched in qs:
+        mother = sched.baby.mother
+        user = mother.user
+        email = getattr(user, 'email', '')
+        phone = mother.phone_number or getattr(user, 'phone_number', '')
+        subject = f"Today: {sched.vaccine_name} for {sched.baby.name}"
+        html = f"""
+        <p>Hello {mother.full_name},</p>
+        <p>Reminder: {sched.vaccine_name} for {sched.baby.name} is scheduled today ({sched.scheduled_date:%Y-%m-%d}).</p>
+        """
+        ok_email = send_email(email, subject, html)
+        try:
+            NotificationLog.objects.create(recipient=user, channel='EMAIL', type='REMINDER', message=subject, success=ok_email, meta={'backend': settings.EMAIL_BACKEND})
+        except Exception:
+            pass
+        sms_text = f"Today: {sched.baby.name} • {sched.vaccine_name}"
+        ok_sms, meta_sms = send_sms(phone, sms_text)
+        try:
+            NotificationLog.objects.create(recipient=user, channel='SMS', type='REMINDER', message=sms_text, success=ok_sms, meta=meta_sms)
+        except Exception:
+            pass
+        count += 1
+    return count
+
+
+@shared_task
+def send_daily_immunization_missed2():
+    # If missed, 2 days after scheduled date, and not completed
+    target = date.today() - timedelta(days=2)
+    qs = ImmunizationSchedule.objects.select_related('baby', 'baby__mother', 'baby__mother__user')\
+        .filter(scheduled_date=target).exclude(status='DONE')
+    count = 0
+    for sched in qs:
+        mother = sched.baby.mother
+        user = mother.user
+        email = getattr(user, 'email', '')
+        phone = mother.phone_number or getattr(user, 'phone_number', '')
+        subject = f"Missed immunization: {sched.vaccine_name} for {sched.baby.name}"
+        html = f"""
+        <p>Hello {mother.full_name},</p>
+        <p>It looks like {sched.vaccine_name} for {sched.baby.name} scheduled on {sched.scheduled_date:%Y-%m-%d} was missed. Please contact the clinic to reschedule.</p>
+        """
+        ok_email = send_email(email, subject, html)
+        try:
+            NotificationLog.objects.create(recipient=user, channel='EMAIL', type='REMINDER', message=subject, success=ok_email, meta={'backend': settings.EMAIL_BACKEND})
+        except Exception:
+            pass
+        sms_text = f"Missed: {sched.baby.name} • {sched.vaccine_name} ({sched.scheduled_date:%Y-%m-%d})"
+        ok_sms, meta_sms = send_sms(phone, sms_text)
+        try:
+            NotificationLog.objects.create(recipient=user, channel='SMS', type='REMINDER', message=sms_text, success=ok_sms, meta=meta_sms)
+        except Exception:
+            pass
+        count += 1
+    return count
+
+
+@shared_task
+def mark_overdue_immunizations_missed():
+    # Auto-mark as MISSED if scheduled date has passed and not completed
+    today = date.today()
+    qs = ImmunizationSchedule.objects.filter(status='DUE', scheduled_date__lt=today)
+    updated = 0
+    for s in qs:
+        s.status = 'MISSED'
+        s.save(update_fields=['status'])
+        updated += 1
+    return updated
 
 
 @shared_task

@@ -16,7 +16,7 @@ class ImmunizationMaster(models.Model):
 
 class ImmunizationSchedule(models.Model):
     STATUS_CHOICES = (
-        ('DUE', 'Due'),
+        ('DUE', 'Pending'),
         ('DONE', 'Done'),
         ('MISSED', 'Missed'),
     )

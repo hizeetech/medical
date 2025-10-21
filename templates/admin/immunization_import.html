@@ -1,0 +1,21 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+  <h1>Import Immunization Schedule (Excel)</h1>
+  {% if messages %}
+    {% for message in messages %}
+      <div class="messagelist"><div class="{{ message.tags }}">{{ message }}</div></div>
+    {% endfor %}
+  {% endif %}
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <p class="help">Upload a .xlsx file containing columns for Age and Vaccine. Other columns (Description/Notes) are optional.</p>
+    <div class="form-row">
+      <label>File (.xlsx):</label>
+      <input type="file" name="file" accept=".xlsx" required>
+    </div>
+    <div class="submit-row">
+      <input type="submit" value="Import" class="default">
+      <a href="{% url 'admin:immunization_immunizationmaster_changelist' %}" class="button">Back</a>
+    </div>
+  </form>
+{% endblock %}
