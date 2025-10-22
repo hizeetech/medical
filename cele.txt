@@ -1,0 +1,13 @@
+3️⃣ Run Celery Worker:
+
+celery -A medical_main worker -l info
+
+
+4️⃣ Run Celery Beat (scheduler):
+
+celery -A medical_main beat -l info
+
+
+👉 Or run both worker + beat together using:
+
+celery -A medical_main worker -B -l info
