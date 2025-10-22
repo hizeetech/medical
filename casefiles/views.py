@@ -19,6 +19,13 @@ from .models import (
     CaseBillingRecord,
     CaseAttachment,
     CaseActivityLog,
+    BabyCaseFile,
+    BabyVisitRecord,
+    BabyPrescription,
+    BabyLabResult,
+    BabyCaseBillingRecord,
+    BabyCaseAttachment,
+    BabyCaseActivityLog,
 )
 from .forms import VisitRecordForm, PrescriptionForm, LabResultForm, CaseAttachmentForm
 from .forms import CaseBillingRecordForm, BabyProfileForm, CaseActivityLogForm
@@ -28,14 +35,22 @@ from .forms import CaseBillingRecordForm, BabyProfileForm, CaseActivityLogForm
 def casefile_search(request):
     query = request.GET.get('q', '').strip()
     patients = []
+    babies = []
     if query:
         patients = MotherProfile.objects.filter(
             Q(member_id__icontains=query) |
             Q(full_name__icontains=query)
         ).order_by('full_name')[:50]
+        babies = BabyProfile.objects.filter(
+            Q(hospital_id__icontains=query) |
+            Q(name__icontains=query) |
+            Q(mother__full_name__icontains=query) |
+            Q(mother__member_id__icontains=query)
+        ).order_by('name')[:50]
     context = {
         'query': query,
         'patients': patients,
+        'babies': babies,
     }
     return render(request, 'casefiles/search.html', context)
 
@@ -359,4 +374,127 @@ def access_log_new(request, casefile_id):
         'case_file': case_file,
         'logs': logs,
         'form': form,
+    })
+
+
+@login_required
+def baby_casefile_detail(request, casefile_id):
+    case_file = get_object_or_404(BabyCaseFile, id=casefile_id)
+    return render(request, 'casefiles/baby_detail.html', {'case_file': case_file, 'baby': case_file.baby})
+
+
+@login_required
+def open_or_create_baby_casefile(request, baby_id):
+    baby = get_object_or_404(BabyProfile, id=baby_id)
+    case_file, _ = BabyCaseFile.objects.get_or_create(
+        baby=baby,
+        defaults={'created_by': request.user}
+    )
+    return redirect('baby_casefile_detail', casefile_id=case_file.id)
+
+
+@login_required
+def baby_tab_overview(request, casefile_id):
+    case_file = get_object_or_404(BabyCaseFile, id=casefile_id)
+    schedules = ImmunizationSchedule.objects.filter(baby=case_file.baby).order_by('scheduled_date')[:50]
+    return render(request, 'casefiles/baby_tabs/_overview.html', {
+        'case_file': case_file,
+        'baby': case_file.baby,
+        'schedules': schedules,
+    })
+
+
+@login_required
+def baby_tab_medical_history(request, casefile_id):
+    case_file = get_object_or_404(BabyCaseFile, id=casefile_id)
+    visits = BabyVisitRecord.objects.filter(case_file=case_file).order_by('-date_of_visit')[:50]
+    logs = BabyCaseActivityLog.objects.filter(case_file=case_file).order_by('-created_at')[:50]
+    return render(request, 'casefiles/baby_tabs/_medical_history.html', {
+        'case_file': case_file,
+        'baby': case_file.baby,
+        'visits': visits,
+        'logs': logs,
+    })
+
+
+@login_required
+def baby_tab_immunizations(request, casefile_id):
+    case_file = get_object_or_404(BabyCaseFile, id=casefile_id)
+    schedules = ImmunizationSchedule.objects.filter(baby=case_file.baby).order_by('scheduled_date')
+    return render(request, 'casefiles/baby_tabs/_immunizations.html', {
+        'case_file': case_file,
+        'baby': case_file.baby,
+        'schedules': schedules,
+    })
+
+
+@login_required
+def baby_tab_prescriptions(request, casefile_id):
+    case_file = get_object_or_404(BabyCaseFile, id=casefile_id)
+    prescriptions = BabyPrescription.objects.filter(case_file=case_file).order_by('-created_at')[:50]
+    return render(request, 'casefiles/baby_tabs/_prescriptions.html', {
+        'case_file': case_file,
+        'baby': case_file.baby,
+        'prescriptions': prescriptions,
+    })
+
+
+@login_required
+def baby_tab_lab_results(request, casefile_id):
+    case_file = get_object_or_404(BabyCaseFile, id=casefile_id)
+    lab_results = BabyLabResult.objects.filter(case_file=case_file).order_by('-date_performed')[:50]
+    return render(request, 'casefiles/baby_tabs/_lab_results.html', {
+        'case_file': case_file,
+        'baby': case_file.baby,
+        'lab_results': lab_results,
+    })
+
+
+@login_required
+def baby_tab_billing(request, casefile_id):
+    case_file = get_object_or_404(BabyCaseFile, id=casefile_id)
+    billing_records = BabyCaseBillingRecord.objects.filter(case_file=case_file).order_by('-created_at')[:50]
+    return render(request, 'casefiles/baby_tabs/_billing.html', {
+        'case_file': case_file,
+        'baby': case_file.baby,
+        'billing_records': billing_records,
+    })
+
+
+@login_required
+def baby_tab_attachments(request, casefile_id):
+    case_file = get_object_or_404(BabyCaseFile, id=casefile_id)
+    attachments = BabyCaseAttachment.objects.filter(case_file=case_file).order_by('-created_at')[:50]
+    return render(request, 'casefiles/baby_tabs/_attachments.html', {
+        'case_file': case_file,
+        'baby': case_file.baby,
+        'attachments': attachments,
+    })
+
+
+@login_required
+def baby_tab_access(request, casefile_id):
+    case_file = get_object_or_404(BabyCaseFile, id=casefile_id)
+    logs = BabyCaseActivityLog.objects.filter(case_file=case_file).order_by('-created_at')[:50]
+    return render(request, 'casefiles/baby_tabs/_access.html', {
+        'case_file': case_file,
+        'baby': case_file.baby,
+        'logs': logs,
+    })
+
+
+@login_required
+def baby_casefile_print(request, casefile_id):
+    case_file = get_object_or_404(BabyCaseFile, id=casefile_id)
+    schedules = ImmunizationSchedule.objects.filter(baby=case_file.baby).order_by('scheduled_date')
+    prescriptions = BabyPrescription.objects.filter(case_file=case_file).order_by('-created_at')
+    lab_results = BabyLabResult.objects.filter(case_file=case_file).order_by('-date_performed')
+    visits = BabyVisitRecord.objects.filter(case_file=case_file).order_by('-date_of_visit')
+    return render(request, 'casefiles/baby_print.html', {
+        'case_file': case_file,
+        'baby': case_file.baby,
+        'schedules': schedules,
+        'prescriptions': prescriptions,
+        'lab_results': lab_results,
+        'visits': visits,
     })

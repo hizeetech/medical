@@ -57,6 +57,17 @@
                 {% else %}
                   <span class="badge text-bg-success">Done</span>
                 {% endif %}
+                <td>
+                  {% if s.baby.hospital_id %}
+                    <span class="badge text-bg-secondary">{{ s.baby.hospital_id }}</span>
+                  {% else %}
+                    <span class="text-muted">No ID</span>
+                  {% endif %}
+                </td>
+                <td class="text-end">
+                  <a href="{% url 'baby_casefiles_open' s.baby.id %}" class="btn btn-sm btn-outline-primary">View Baby Case File</a>
+                  <a href="{% url 'immunization_manage_baby' s.baby.id %}" class="btn btn-sm btn-outline-secondary">Manage Immunizations</a>
+                </td>
               </div>
             {% endfor %}
           </div>

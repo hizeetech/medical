@@ -13,6 +13,7 @@ from reportlab.lib.utils import ImageReader
 from datetime import datetime, date
 from barcode import Code128
 from barcode.writer import ImageWriter
+from django.db.models import Q
 
 
 @login_required
@@ -40,9 +41,11 @@ def dashboard(request):
         today = date.today()
         qs = ImmunizationSchedule.objects.select_related('baby').filter(baby__mother=profile)
         next_immunization = qs.filter(status='DUE', scheduled_date__gte=today).order_by('scheduled_date').first()
-        upcoming_immunizations = qs.filter(status='DUE', scheduled_date__gte=today).order_by('scheduled_date')[:5]
+        due_immunizations = ImmunizationSchedule.objects.filter(baby__mother=profile, status='DUE', visible_to_mother=True).order_by('scheduled_date')
+        upcoming_immunizations = ImmunizationSchedule.objects.filter(baby__mother=profile, status='DUE', visible_to_mother=True).order_by('scheduled_date')[:5]
         completed_immunizations = qs.filter(status='DONE').order_by('-date_completed', '-scheduled_date')[:5]
-        missed_immunizations = qs.filter(status='MISSED').order_by('-scheduled_date')[:5]
+        # Missed = explicit MISSED or any past-due not completed
+        missed_immunizations = qs.filter(Q(status='MISSED') | (Q(status='DUE') & Q(scheduled_date__lt=today))).order_by('-scheduled_date')[:5]
     except Exception:
         next_immunization = None
         upcoming_immunizations = []
@@ -61,6 +64,9 @@ def dashboard(request):
         recent_invoices = []
         outstanding_invoices = []
 
+    # Babies linked to this mother
+    babies = BabyProfile.objects.filter(mother=profile).order_by('date_of_birth')
+
     return render(request, 'patients/dashboard.html', {
         'profile': profile,
         'show_biodata_modal': show_biodata_modal,
@@ -74,6 +80,7 @@ def dashboard(request):
         'missed_immunizations': missed_immunizations,
         'recent_invoices': recent_invoices,
         'outstanding_invoices': outstanding_invoices,
+        'babies': babies,
     })
 
 
@@ -122,7 +129,28 @@ def profile_complete(request):
     if request.method == 'POST':
         form = MotherProfileForm(request.POST, request.FILES, instance=profile)
         if form.is_valid():
-            form.save()
+            saved = form.save()
+            # Sync key fields back to User so Admin shows them under Personal info
+            user = request.user
+            fields_to_update = []
+            if saved.phone_number and saved.phone_number != user.phone_number:
+                user.phone_number = saved.phone_number
+                fields_to_update.append('phone_number')
+            if saved.full_name:
+                parts = saved.full_name.strip().split(' ', 1)
+                first = parts[0] if parts else ''
+                last = parts[1] if len(parts) > 1 else ''
+                if first != user.first_name:
+                    user.first_name = first
+                    fields_to_update.append('first_name')
+                if last != user.last_name:
+                    user.last_name = last
+                    fields_to_update.append('last_name')
+            if saved.profile_picture and not user.avatar:
+                user.avatar = saved.profile_picture
+                fields_to_update.append('avatar')
+            if fields_to_update:
+                user.save(update_fields=fields_to_update)
             messages.success(request, 'Bio-data saved successfully.')
         else:
             messages.error(request, 'Please correct the errors in the bio-data form.')
@@ -142,9 +170,30 @@ def profile_edit(request):
     if request.method == 'POST':
         form = MotherProfileForm(request.POST, request.FILES, instance=profile)
         if form.is_valid():
-            form.save()
+            saved = form.save()
+            # Sync key fields back to User for visibility in Admin
+            user = request.user
+            fields_to_update = []
+            if saved.phone_number and saved.phone_number != user.phone_number:
+                user.phone_number = saved.phone_number
+                fields_to_update.append('phone_number')
+            if saved.full_name:
+                parts = saved.full_name.strip().split(' ', 1)
+                first = parts[0] if parts else ''
+                last = parts[1] if len(parts) > 1 else ''
+                if first != user.first_name:
+                    user.first_name = first
+                    fields_to_update.append('first_name')
+                if last != user.last_name:
+                    user.last_name = last
+                    fields_to_update.append('last_name')
+            if saved.profile_picture and not user.avatar:
+                user.avatar = saved.profile_picture
+                fields_to_update.append('avatar')
+            if fields_to_update:
+                user.save(update_fields=fields_to_update)
             messages.success(request, 'Profile updated successfully.')
-            return redirect('profile_edit')
+            return redirect('dashboard')
         else:
             messages.error(request, 'Please fix the errors below.')
     else:

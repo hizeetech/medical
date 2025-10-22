@@ -15,3 +15,20 @@ class AddBabyImmunizationForm(forms.Form):
         required=False,
         widget=forms.Textarea(attrs={'rows': 2})
     )
+
+
+class AdministerImmunizationForm(forms.Form):
+    batch_number = forms.CharField(required=False, max_length=120)
+    manufacturer = forms.CharField(required=False, max_length=120)
+    administration_site = forms.CharField(required=False, max_length=64)
+    administered_at = forms.DateTimeField(required=False, widget=forms.DateTimeInput(attrs={'type': 'datetime-local'}))
+    notes = forms.CharField(required=False, widget=forms.Textarea(attrs={'rows': 3}))
+
+
+class ObservationForm(forms.Form):
+    notes = forms.CharField(required=True, widget=forms.Textarea(attrs={'rows': 3}))
+
+
+class RescheduleForm(forms.Form):
+    rescheduled_for = forms.DateField(required=True, widget=forms.DateInput(attrs={'type': 'date'}))
+    reason = forms.CharField(required=False, max_length=200)

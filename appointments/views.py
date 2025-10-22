@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.utils.text import slugify
 from django.utils import timezone
@@ -37,14 +37,35 @@ def _find_doctor_by_slug(doctor_slug: str):
 
 @login_required
 def appointments_list(request):
+    # Support simple filtering for doctor view
+    filter_q = (request.GET.get('filter') or 'ALL').upper()
+    user = request.user
+    if getattr(user, 'role', '') == 'DOCTOR' or user.is_staff:
+        qs = Appointment.objects.filter(doctor=user)
+        now = timezone.now()
+        if filter_q == 'UPCOMING':
+            qs = qs.filter(status='SCHEDULED', scheduled_at__gte=now)
+        elif filter_q == 'COMPLETED':
+            qs = qs.filter(status='COMPLETED')
+        elif filter_q == 'CANCELLED':
+            qs = qs.filter(status='CANCELLED')
+        appointments = qs.order_by('scheduled_at')
+        return render(request, 'appointments/list.html', {
+            'appointments': appointments,
+            'is_doctor_view': True,
+            'current_filter': filter_q,
+        })
+    # Patient view shows their own appointments
     profile, _ = MotherProfile.objects.get_or_create(
-        user=request.user,
-        defaults={'full_name': '', 'phone_number': request.user.phone_number or ''}
+        user=user,
+        defaults={'full_name': '', 'phone_number': user.phone_number or ''}
     )
     appointments = Appointment.objects.filter(patient=profile).order_by('scheduled_at')
     return render(request, 'appointments/list.html', {
         'profile': profile,
         'appointments': appointments,
+        'is_doctor_view': False,
+        'current_filter': 'ALL',
     })
 
 
@@ -59,7 +80,8 @@ def appointment_new(request):
     doctors = list(candidates_qs.distinct())
 
     today = timezone.localdate()
-    upcoming_dates = [today + timedelta(days=i) for i in range(60)]
+    upcoming_dates = [today + timedelta(days=i) for i in range(60)
+]
 
     schedules_qs = (DoctorSchedule.objects
                     .filter(doctor__in=doctors)
@@ -92,39 +114,32 @@ def appointment_new(request):
         doc_dates = []
         doc_times = {}
         doc_meta = {}
-        for d in upcoming_dates:
-            day_name = d.strftime('%A')
-            ranges = by_day.get(day_name, [])
-            if not ranges:
+        # Build available dates and times for the next 60 days
+        for date in upcoming_dates:
+            dow = date.weekday()
+            schedules_for_day = by_day.get(dow, [])
+            if not schedules_for_day:
                 continue
-            date_key = d.strftime('%Y-%m-%d')
-            doc_dates.append(date_key)
+            date_key = date.strftime('%Y-%m-%d')
             slots = []
-            for sched in ranges:
-                dt_start = datetime.combine(d, sched.start_time)
-                dt_end = datetime.combine(d, sched.end_time)
-                cur = dt_start
-                while cur < dt_end:
-                    tstr = cur.strftime('%H:%M')
-                    slots.append(tstr)
-                    # Record meta per slot
-                    doc_meta.setdefault(date_key, {})[tstr] = {
-                        'center_name': getattr(sched.center, 'name', str(sched.center)),
-                        'location': sched.location or '',
+            for ds in schedules_for_day:
+                # Add slots every 30 minutes within schedule window
+                start_dt = timezone.make_aware(datetime.combine(date, ds.start_time))
+                end_dt = timezone.make_aware(datetime.combine(date, ds.end_time))
+                cur = start_dt
+                while cur < end_dt:
+                    slots.append(cur.strftime('%H:%M'))
+                    # store meta for slot (center, doctor)
+                    doc_meta.setdefault(date_key, {})[cur.strftime('%H:%M')] = {
+                        'center': getattr(ds.center, 'name', ''),
                         'doctor_id': doc.id,
                     }
-                    # Union meta chooses first available
-                    any_meta_by_date_time.setdefault(date_key, {})
-                    any_meta_by_date_time[date_key].setdefault(tstr, {
-                        'center_name': getattr(sched.center, 'name', str(sched.center)),
-                        'location': sched.location or '',
-                        'doctor_id': doc.id,
-                    })
                     cur += timedelta(minutes=30)
-            slots = sorted(set(slots))
-            doc_times[date_key] = slots
-            union_dates.add(date_key)
-            union_times_by_date.setdefault(date_key, set()).update(slots)
+            if slots:
+                doc_dates.append(date_key)
+                doc_times[date_key] = slots
+                union_dates.add(date_key)
+                union_times_by_date.setdefault(date_key, set()).update(slots)
         if doc_dates:
             dates_by_doc[doc.id] = sorted(set(doc_dates))
         if doc_times:
@@ -242,3 +257,53 @@ def appointment_new(request):
         'doctor_id': getattr(doctor, 'id', None),
     }
     return render(request, 'appointments/new.html', context)
+
+
+@login_required
+def appointment_detail(request, pk):
+    appt = get_object_or_404(Appointment, pk=pk)
+    user = request.user
+    is_doctor_or_staff = getattr(user, 'role', '') == 'DOCTOR' or user.is_staff
+    can_update = is_doctor_or_staff and (appt.doctor_id == user.id or user.is_staff)
+
+    # Patient can view only their own appointment
+    if not is_doctor_or_staff:
+        if not hasattr(appt.patient, 'user') or appt.patient.user_id != user.id:
+            messages.error(request, 'You do not have permission to view this appointment.')
+            return redirect('appointments_list')
+
+    if request.method == 'POST':
+        if not can_update:
+            messages.error(request, 'You do not have permission to update this appointment.')
+            return redirect('appointment_detail', pk=appt.pk)
+        status = request.POST.get('status', appt.status)
+        scheduled_date = request.POST.get('scheduled_date', '')
+        scheduled_time = request.POST.get('scheduled_time', '')
+        notes = request.POST.get('notes', appt.notes)
+
+        # Update status
+        if status in dict(Appointment.STATUS_CHOICES):
+            appt.status = status
+        else:
+            messages.error(request, 'Invalid status value.')
+            return redirect('appointment_detail', pk=appt.pk)
+
+        # Optional reschedule
+        if scheduled_date and scheduled_time:
+            try:
+                dt = datetime.strptime(f"{scheduled_date} {scheduled_time}", '%Y-%m-%d %H:%M')
+                appt.scheduled_at = timezone.make_aware(dt, timezone.get_current_timezone())
+            except Exception:
+                messages.error(request, 'Invalid date/time format for rescheduling.')
+                return redirect('appointment_detail', pk=appt.pk)
+
+        appt.notes = notes
+        appt.save()
+        messages.success(request, 'Appointment updated successfully.')
+        return redirect('appointment_detail', pk=appt.pk)
+
+    return render(request, 'appointments/detail.html', {
+        'appointment': appt,
+        'is_doctor_view': is_doctor_or_staff,
+        'can_update': can_update,
+    })

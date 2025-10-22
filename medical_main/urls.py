@@ -24,9 +24,9 @@ from patients.views import (
     profile_edit, profile_complete, member_card_pdf,
     record_vitals, postnatal_plan, baby_profile_view,
 )
-from appointments.views import appointments_list, appointment_new
+from appointments.views import appointments_list, appointment_new, appointment_detail
 from immunization.views import schedule_view as immunization_schedule, update_schedule_status, schedule_all_view
-from immunization.views import manage_baby_immunizations, baby_immunization_pdf
+from immunization.views import manage_baby_immunizations, baby_immunization_pdf, immunization_approve, immunization_complete, immunization_observe, immunization_reschedule, immunization_certificate
 from centers.views import centers_list, center_detail
 from admin_dashboard.views import (
     index as admin_dashboard_index,
@@ -55,6 +55,7 @@ urlpatterns = [
     # Services
     path('appointments/', appointments_list, name='appointments_list'),
     path('appointments/new/', appointment_new, name='appointment_new'),
+    path('appointments/<int:pk>/', appointment_detail, name='appointment_detail'),
     path('vitals/', record_vitals, name='record_vitals'),
     path('postnatal-plan/', postnatal_plan, name='postnatal_plan'),
     path('immunization/schedule/', immunization_schedule, name='immunization_schedule'),
@@ -62,6 +63,11 @@ urlpatterns = [
     path('immunization/schedule/<int:pk>/status/', update_schedule_status, name='immunization_update_status'),
     path('immunization/baby/<int:baby_id>/manage/', manage_baby_immunizations, name='immunization_manage_baby'),
     path('immunization/baby/<int:baby_id>/pdf/', baby_immunization_pdf, name='immunization_baby_pdf'),
+    path('immunization/baby/<int:baby_id>/approve/', immunization_approve, name='immunization_approve'),
+    path('immunization/schedule/<int:pk>/complete/', immunization_complete, name='immunization_complete'),
+    path('immunization/schedule/<int:pk>/observe/', immunization_observe, name='immunization_observe'),
+    path('immunization/schedule/<int:pk>/reschedule/', immunization_reschedule, name='immunization_reschedule'),
+    path('immunization/baby/<int:baby_id>/certificate/', immunization_certificate, name='immunization_certificate'),
     path('baby-profile/', baby_profile_view, name='baby_profile'),
     # Services: Centers & Clinics
     path('centers/', centers_list, name='centers_list'),

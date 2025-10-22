@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+  <h3>Immunization Certificate</h3>
+  <p><strong>Baby:</strong> {{ baby.name }} | <strong>DOB:</strong> {{ baby.date_of_birth }} | <strong>Mother:</strong> {{ baby.mother.full_name }}</p>
+  {% if certificate %}
+    <p><strong>Generated At:</strong> {{ certificate.generated_at }} {% if certificate.generated_by %} | <strong>By:</strong> {{ certificate.generated_by.get_full_name|default:certificate.generated_by.username }}{% endif %}</p>
+  {% else %}
+    <div class="alert alert-warning">Certificate not yet available. All immunizations must be completed.</div>
+  {% endif %}
+  <table class="table table-sm mt-3">
+    <thead>
+      <tr>
+        <th>Vaccine</th>
+        <th>Recommended Date</th>
+        <th>Status</th>
+        <th>Completed On</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for s in items %}
+      <tr>
+        <td>{{ s.vaccine_name }}</td>
+        <td>{{ s.scheduled_date }}</td>
+        <td>{{ s.get_status_display }}</td>
+        <td>{{ s.date_completed|default:'—' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

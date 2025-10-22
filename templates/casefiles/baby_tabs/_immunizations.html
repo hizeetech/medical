@@ -1,0 +1,30 @@
+<div class="d-flex justify-content-between align-items-center mb-2">
+  <h2 class="h5 mb-0">Immunizations</h2>
+  <span class="badge text-bg-secondary">Schedules & status</span>
+</div>
+<div class="card shadow-sm">
+  <div class="card-body">
+    {% if schedules %}
+      <div class="list-group">
+        {% for s in schedules %}
+          <div class="list-group-item d-flex justify-content-between align-items-center">
+            <div>
+              <div class="fw-semibold">{{ s.vaccine_name }}</div>
+              <div class="small text-muted">{{ s.scheduled_date|date:'M d, Y' }} · {{ s.get_status_display }}</div>
+              {% if s.rescheduled_for %}<div class="small">Rescheduled: {{ s.rescheduled_for|date:'M d, Y' }}</div>{% endif %}
+            </div>
+            {% if s.status == 'DUE' %}
+              <span class="badge text-bg-warning">Pending</span>
+            {% elif s.status == 'MISSED' %}
+              <span class="badge text-bg-danger">Missed</span>
+            {% else %}
+              <span class="badge text-bg-success">Done</span>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="text-muted">No immunizations recorded.</div>
+    {% endif %}
+  </div>
+</div>

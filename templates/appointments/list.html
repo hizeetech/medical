@@ -1,21 +1,48 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 {% block content %}
+<div class="container mt-4">
   <div class="d-flex justify-content-between align-items-center mb-3">
-    <h3 class="mb-0">Appointments</h3>
-    <a class="btn btn-primary" href="{% url 'appointment_new' %}"><i class="bi bi-plus-lg me-1"></i> New Appointment</a>
+    <h2>Appointments</h2>
+    {% if is_doctor_view %}
+      <div class="d-flex gap-2 mb-3">
+        <a href="{% url 'appointments_list' %}" class="btn btn-sm {% if current_filter == 'ALL' %}btn-primary{% else %}btn-outline-primary{% endif %}">All</a>
+        <a href="{% url 'appointments_list' %}?filter=upcoming" class="btn btn-sm {% if current_filter == 'UPCOMING' %}btn-primary{% else %}btn-outline-primary{% endif %}">Upcoming</a>
+        <a href="{% url 'appointments_list' %}?filter=completed" class="btn btn-sm {% if current_filter == 'COMPLETED' %}btn-primary{% else %}btn-outline-primary{% endif %}">Completed</a>
+        <a href="{% url 'appointments_list' %}?filter=cancelled" class="btn btn-sm {% if current_filter == 'CANCELLED' %}btn-primary{% else %}btn-outline-primary{% endif %}">Cancelled</a>
+      </div>
+    {% endif %}
   </div>
+
   {% if appointments %}
-    <div class="list-group">
+    <ul class="list-group">
       {% for appt in appointments %}
-        <div class="list-group-item d-flex justify-content-between align-items-center">
+        <li class="list-group-item d-flex justify-content-between align-items-center">
           <div>
-            <div class="fw-semibold">{{ appt.get_appointment_type_display }}</div>
-            <div class="text-muted small">{{ appt.scheduled_at|date:"Y-m-d H:i" }} • Status: {{ appt.status }}</div>
+            <a href="{% url 'appointment_detail' appt.pk %}" class="text-decoration-none">
+              {% if is_doctor_view %}
+                <strong>{{ appt.patient.full_name }}</strong>
+                — {{ appt.get_appointment_type_display }}
+                — {{ appt.scheduled_at|date:"M d, Y H:i" }}
+              {% else %}
+                {{ appt.get_appointment_type_display }} — {{ appt.scheduled_at|date:"M d, Y H:i" }}
+              {% endif %}
+            </a>
           </div>
-        </div>
+          <div class="d-flex align-items-center gap-2">
+            <span class="badge-status {% if appt.status == 'COMPLETED' %}badge-status-completed{% elif appt.status == 'CANCELLED' %}badge-status-cancelled{% elif appt.status == 'MISSED' %}badge-status-missed{% else %}badge-status-scheduled{% endif %}">
+              {{ appt.get_status_display }}
+            </span>
+            {% if is_doctor_view %}
+              <a href="{% url 'appointment_detail' appt.pk %}" class="btn btn-sm btn-outline-secondary">Open</a>
+            {% endif %}
+          </div>
+        </li>
+      {% empty %}
+        <li class="list-group-item">No appointments found.</li>
       {% endfor %}
-    </div>
+    </ul>
   {% else %}
-    <p class="text-muted">No appointments yet.</p>
+    <div class="alert alert-info">No appointments found.</div>
   {% endif %}
+</div>
 {% endblock %}

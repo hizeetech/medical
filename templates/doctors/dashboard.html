@@ -16,6 +16,47 @@
     </div>
   </div>
 
+  <!-- Today's Immunization Performance Chart (Collapsible) -->
+  <div class="card card-shadow mb-3">
+    <div class="card-body">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <div class="d-flex align-items-center">
+          <i class="bi bi-graph-up-arrow text-primary me-2"></i>
+          <h5 class="card-title mb-0">{{ doc_immunization_perf.title }}</h5>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <form method="get" class="d-flex align-items-center gap-2">
+            <select name="range" class="form-select form-select-sm" style="max-width: 160px;">
+              <option value="today" {% if doc_immunization_perf.range == 'today' %}selected{% endif %}>Today</option>
+              <option value="week" {% if doc_immunization_perf.range == 'week' %}selected{% endif %}>This Week</option>
+              <option value="month" {% if doc_immunization_perf.range == 'month' %}selected{% endif %}>This Month</option>
+            </select>
+            <input type="text" name="vaccine" value="{{ doc_immunization_perf.vaccine }}" class="form-control form-control-sm" placeholder="Filter by vaccine (e.g., BCG)" style="max-width: 220px;">
+            <button class="btn btn-outline-primary btn-sm" type="submit"><i class="bi bi-funnel me-1"></i> Apply</button>
+          </form>
+          <button id="docImmunizationToggleBtn" class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#docImmunizationCollapse" aria-expanded="false" aria-controls="docImmunizationCollapse">
+            Show
+          </button>
+        </div>
+      </div>
+      <div id="docImmunizationCollapse" class="collapse">
+        <div class="row">
+          <div class="col-md-6">
+            <canvas id="doctorImmunizationChart" height="140"></canvas>
+          </div>
+          <div class="col-md-6">
+            <div class="alert alert-info small mb-0">{{ doc_immunization_perf.summary_text }}</div>
+            <ul class="list-unstyled mt-2 small mb-0">
+              <li><span class="badge bg-primary me-1">Expected</span> {{ doc_immunization_perf.expected }}</li>
+              <li><span class="badge bg-success me-1">Completed</span> {{ doc_immunization_perf.completed }}</li>
+              <li><span class="badge bg-danger me-1">Missed</span> {{ doc_immunization_perf.missed }}</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="row g-3">
     <div class="col-md-6">
       <div class="card card-shadow h-100">
@@ -71,6 +112,80 @@
       <div class="card card-shadow">
         <div class="card-body">
           <div class="d-flex align-items-center mb-2">
+            <i class="bi bi-exclamation-circle text-warning me-2"></i>
+            <h5 class="card-title mb-0">Overdue Immunization</h5>
+          </div>
+          <!-- Filter form for Overdue Immunizations -->
+          <form method="get" class="row g-2 align-items-end mb-2">
+            <div class="col-md-3">
+              <label class="form-label small">Search</label>
+              <input type="text" name="over_q" value="{{ request.GET.over_q }}" class="form-control form-control-sm" placeholder="Mother/Baby/ID/Phone">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label small">Vaccine</label>
+              <input type="text" name="over_vaccine" value="{{ request.GET.over_vaccine }}" class="form-control form-control-sm" placeholder="e.g., OPV, BCG">
+            </div>
+            <div class="col-md-2">
+              <label class="form-label small">From</label>
+              <input type="date" name="over_start" value="{{ request.GET.over_start }}" class="form-control form-control-sm">
+            </div>
+            <div class="col-md-2">
+              <label class="form-label small">To</label>
+              <input type="date" name="over_end" value="{{ request.GET.over_end }}" class="form-control form-control-sm">
+            </div>
+            <div class="col-md-2">
+              <label class="form-label small">Min days overdue</label>
+              <input type="number" name="over_days" min="0" value="{{ request.GET.over_days }}" class="form-control form-control-sm" placeholder="e.g., 7">
+            </div>
+            <div class="col-auto ms-auto">
+              <button type="submit" class="btn btn-outline-primary btn-sm"><i class="bi bi-funnel"></i> Filter</button>
+              <a href="{% url 'doctor_dashboard' %}" class="btn btn-outline-secondary btn-sm ms-2"><i class="bi bi-arrow-counterclockwise"></i> Reset</a>
+            </div>
+          </form>
+
+          {% if overdue_schedules %}
+            <div class="table-responsive">
+              <table class="table table-sm">
+                <thead>
+                  <tr>
+                    <th>Baby</th>
+                    <th>Vaccine</th>
+                    <th>Scheduled Date</th>
+                    <th class="text-end">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for s in overdue_schedules %}
+                    <tr>
+                      <td>{{ s.baby.name }} • {{ s.baby.mother.full_name }}</td>
+                      <td>{{ s.vaccine_name }}</td>
+                      <td>{{ s.scheduled_date|date:"Y-m-d" }}</td>
+                      <td class="text-end">
+                        {% if s.baby.mother.phone_number %}
+                          <a class="btn btn-sm btn-outline-success" href="tel:{{ s.baby.mother.phone_number }}"><i class="bi bi-telephone"></i> Call</a>
+                        {% endif %}
+                        {% if s.baby.mother.user and s.baby.mother.user.email %}
+                          <a class="btn btn-sm btn-outline-secondary" href="mailto:{{ s.baby.mother.user.email }}?subject=Overdue%20{{ s.vaccine_name }}&body=Dear%20{{ s.baby.mother.full_name }},%20{{ s.vaccine_name }}%20for%20{{ s.baby.name }}%20was%20scheduled%20on%20{{ s.scheduled_date|date:'Y-m-d' }}%20and%20is%20now%20overdue."><i class="bi bi-envelope"></i> Email</a>
+                        {% endif %}
+                        <a class="btn btn-sm btn-outline-primary" href="{% url 'casefiles_open' s.baby.mother.id %}"><i class="bi bi-folder2-open"></i> Case File</a>
+                        <a class="btn btn-sm btn-outline-info" href="{% url 'immunization_manage_baby' s.baby.id %}"><i class="bi bi-syringe"></i> Manage</a>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <p class="text-muted">No overdue immunizations.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12">
+      <div class="card card-shadow">
+        <div class="card-body">
+          <div class="d-flex align-items-center mb-2">
             <i class="bi bi-journal-medical text-primary me-2"></i>
             <h5 class="card-title mb-0">Recent Medical Records</h5>
           </div>
@@ -101,5 +216,206 @@
         </div>
       </div>
     </div>
+
+    <div class="col-12">
+      <div class="card card-shadow">
+        <div class="card-body">
+          <div class="d-flex align-items-center mb-2">
+            <i class="bi bi-syringe text-success me-2"></i>
+            <h5 class="card-title mb-0">Upcoming Immunizations</h5>
+          </div>
+          {% if upcoming_immunizations_all %}
+            <div class="table-responsive">
+              <table class="table table-sm">
+                <thead>
+                  <tr>
+                    <th>Baby</th>
+                    <th>Vaccine</th>
+                    <th>Scheduled Date</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for s in upcoming_immunizations_all %}
+                    <tr>
+                      <td>{{ s.baby.name }}</td>
+                      <td>{{ s.vaccine_name }}</td>
+                      <td>{{ s.scheduled_date }}</td>
+                      <td class="text-end">
+                        <a href="{% url 'immunization_manage_baby' s.baby.id %}" class="btn btn-outline-primary btn-sm">Manage</a>
+                        <a href="{% url 'immunization_approve' s.baby.id %}" class="btn btn-success btn-sm">Approve</a>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <p class="text-muted">No upcoming immunizations.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    <!-- Today’s Immunization -->
+    <div class="card card-shadow mb-3">
+      <div class="card-body">
+        <div class="d-flex align-items-center mb-2">
+          <i class="bi bi-syringe text-success me-2"></i>
+          <h5 class="card-title mb-0">Today's Immunization</h5>
+        </div>
+        {% if today_immunizations %}
+          <div class="table-responsive">
+            <table class="table table-sm">
+              <thead>
+                <tr>
+                  <th>Vaccine</th>
+                  <th>Recommended Date</th>
+                  <th>Status</th>
+                  <th>Actual Date Given</th>
+                  <th class="text-end">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for s in today_immunizations %}
+                  <tr>
+                    <td>{{ s.vaccine_name }}</td>
+                    <td>{{ s.scheduled_date|date:'Y-m-d' }}</td>
+                    <td>{{ s.get_status_display }}</td>
+                    <td>{% if s.date_completed %}{{ s.date_completed|date:'Y-m-d' }}{% else %}-{% endif %}</td>
+                    <td class="text-end">
+                      <a href="{% url 'immunization_complete' s.id %}" class="btn btn-success btn-sm {% if s.status == 'DONE' %}disabled{% endif %}">Complete</a>
+                      <a href="{% url 'immunization_observe' s.id %}" class="btn btn-outline-secondary btn-sm">Observe</a>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <p class="text-muted">No immunizations scheduled for today.</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Missed Immunizations (with filters and contact actions) -->
+    <div class="card card-shadow mb-3">
+      <div class="card-body">
+        <div class="d-flex align-items-center mb-2">
+          <i class="bi bi-x-circle text-danger me-2"></i>
+          <h5 class="card-title mb-0">Missed Immunizations</h5>
+        </div>
+        <!-- Filter form for Missed Immunizations -->
+        <form method="get" class="row g-2 align-items-end mb-2">
+          <div class="col-md-3">
+            <label class="form-label small">Search</label>
+            <input type="text" name="miss_q" value="{{ request.GET.miss_q }}" class="form-control form-control-sm" placeholder="Mother/Baby/ID/Phone">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label small">Vaccine</label>
+            <input type="text" name="miss_vaccine" value="{{ request.GET.miss_vaccine }}" class="form-control form-control-sm" placeholder="e.g., OPV, BCG">
+          </div>
+          <div class="col-md-2">
+            <label class="form-label small">From</label>
+            <input type="date" name="miss_start" value="{{ request.GET.miss_start }}" class="form-control form-control-sm">
+          </div>
+          <div class="col-md-2">
+            <label class="form-label small">To</label>
+            <input type="date" name="miss_end" value="{{ request.GET.miss_end }}" class="form-control form-control-sm">
+          </div>
+          <div class="col-md-2">
+            <label class="form-label small">Min days overdue</label>
+            <input type="number" name="miss_days" min="0" value="{{ request.GET.miss_days }}" class="form-control form-control-sm" placeholder="e.g., 7">
+          </div>
+          <div class="col-auto ms-auto">
+            <button type="submit" class="btn btn-outline-primary btn-sm"><i class="bi bi-funnel"></i> Filter</button>
+            <a href="{% url 'doctor_dashboard' %}" class="btn btn-outline-secondary btn-sm ms-2"><i class="bi bi-arrow-counterclockwise"></i> Reset</a>
+          </div>
+        </form>
+
+        {% if missed_schedules %}
+          <ul class="list-group list-group-flush">
+            {% for s in missed_schedules %}
+              <li class="list-group-item">
+                <div class="fw-semibold">{{ s.baby.name }} • {{ s.baby.mother.full_name }}</div>
+                <div class="text-muted small">
+                  {{ s.vaccine_name }} • {{ s.scheduled_date|date:"Y-m-d" }}
+                  • Member: {{ s.baby.mother.member_id|default:"-" }}
+                  • Phone: {{ s.baby.mother.phone_number|default:"-" }}
+                </div>
+                <div class="mt-2 d-flex flex-wrap gap-2">
+                  {% if s.baby.mother.phone_number %}
+                    <a class="btn btn-sm btn-outline-success" href="tel:{{ s.baby.mother.phone_number }}"><i class="bi bi-telephone"></i> Call</a>
+                  {% endif %}
+                  {% if s.baby.mother.user and s.baby.mother.user.email %}
+                    <a class="btn btn-sm btn-outline-secondary" href="mailto:{{ s.baby.mother.user.email }}?subject=Missed%20{{ s.vaccine_name }}&body=Dear%20{{ s.baby.mother.full_name }},%20{{ s.vaccine_name }}%20for%20{{ s.baby.name }}%20was%20scheduled%20on%20{{ s.scheduled_date|date:'Y-m-d' }}."><i class="bi bi-envelope"></i> Email</a>
+                  {% endif %}
+                  <a class="btn btn-sm btn-outline-primary" href="{% url 'casefiles_open' s.baby.mother.id %}"><i class="bi bi-folder2-open"></i> Case File</a>
+                  <a class="btn btn-sm btn-outline-info" href="{% url 'immunization_manage_baby' s.baby.id %}"><i class="bi bi-syringe"></i> Manage</a>
+                </div>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="text-muted">No missed immunizations.</p>
+        {% endif %}
+      </div>
+    </div>
   </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    (function() {
+      const expected = {{ doc_immunization_perf.expected|default:0 }};
+      const completed = {{ doc_immunization_perf.completed|default:0 }};
+      const missed = {{ doc_immunization_perf.missed|default:0 }};
+      const total = expected + completed + missed;
+      const pct = (val) => total ? Math.round((val / total) * 100) : 0;
+
+      const ctx = document.getElementById('doctorImmunizationChart').getContext('2d');
+      const chartInstance = new Chart(ctx, {
+        type: 'pie',
+        data: {
+          labels: ['Expected', 'Completed', 'Missed'],
+          datasets: [{
+            data: [expected, completed, missed],
+            backgroundColor: ['#0d6efd', '#198754', '#dc3545']
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  const label = context.label || '';
+                  const value = context.raw || 0;
+                  return `${label}: ${value} (${pct(value)}%)`;
+                }
+              }
+            },
+            legend: { position: 'bottom' },
+            title: { display: false }
+          }
+        }
+      });
+
+      const collapseEl = document.getElementById('docImmunizationCollapse');
+      const toggleBtn = document.getElementById('docImmunizationToggleBtn');
+      if (collapseEl) {
+        // Set initial label based on current state
+        if (toggleBtn) {
+          const isShown = collapseEl.classList.contains('show');
+          toggleBtn.textContent = isShown ? 'Hide' : 'Show';
+        }
+
+        collapseEl.addEventListener('shown.bs.collapse', function () {
+          try { chartInstance.resize(); } catch (e) {}
+          if (toggleBtn) toggleBtn.textContent = 'Hide';
+        });
+        collapseEl.addEventListener('hidden.bs.collapse', function () {
+          if (toggleBtn) toggleBtn.textContent = 'Show';
+        });
+      }
+    })();
+  </script>
 {% endblock %}

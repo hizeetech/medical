@@ -1,0 +1,46 @@
+<div class="d-flex justify-content-between align-items-center mb-2">
+  <h2 class="h5 mb-0">Medical History</h2>
+  <span class="badge text-bg-secondary">Visits & timeline</span>
+</div>
+<div class="row g-3">
+  <div class="col-lg-6">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h6 class="text-muted">Visits</h6>
+        {% if visits %}
+          <ul class="list-group">
+            {% for v in visits %}
+              <li class="list-group-item">
+                <div class="fw-semibold">{{ v.date_of_visit|date:'M d, Y' }}</div>
+                <div class="small text-muted">Provider: {% if v.provider %}{{ v.provider.full_name|default:v.provider.email }}{% else %}Unknown{% endif %}</div>
+                {% if v.notes %}<div class="small">{{ v.notes }}</div>{% endif %}
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <div class="text-muted">No visits yet.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h6 class="text-muted">Activity Log</h6>
+        {% if logs %}
+          <ul class="list-group">
+            {% for a in logs %}
+              <li class="list-group-item">
+                <div class="fw-semibold">{{ a.created_at|date:'M d, Y H:i' }} · {{ a.action }}</div>
+                <div class="small text-muted">By: {% if a.user %}{{ a.user.full_name|default:a.user.email }}{% else %}System{% endif %}</div>
+                {% if a.notes %}<div class="small">{{ a.notes }}</div>{% endif %}
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <div class="text-muted">No activity yet.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>

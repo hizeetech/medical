@@ -7,9 +7,10 @@ from django.http import HttpResponse
 from io import BytesIO
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
-from .models import ImmunizationSchedule, ImmunizationMaster
+from .models import ImmunizationSchedule, ImmunizationMaster, ImmunizationApproval, ImmunizationCertificate
 from patients.models import MotherProfile, BabyProfile
-from .forms import AddBabyImmunizationForm
+from .forms import AddBabyImmunizationForm, AdministerImmunizationForm, ObservationForm, RescheduleForm
+from accounts.decorators import role_required
 
 
 @login_required
@@ -296,3 +297,143 @@ def baby_immunization_pdf(request, baby_id):
     resp = HttpResponse(buffer.read(), content_type='application/pdf')
     resp['Content-Disposition'] = f'inline; filename="immunization-{baby.name}.pdf"'
     return resp
+
+
+@login_required
+def immunization_approve(request, baby_id):
+    if not request.user.is_staff:
+        messages.error(request, 'Staff access only.')
+        return redirect('immunization_schedule_all')
+    try:
+        baby = BabyProfile.objects.get(pk=baby_id)
+    except BabyProfile.DoesNotExist:
+        messages.error(request, 'Baby not found.')
+        return redirect('immunization_schedule_all')
+    # Create or update approval
+    approv, created = ImmunizationApproval.objects.get_or_create(
+        baby=baby,
+        defaults={'approved_by': request.user}
+    )
+    if not created and approv.approved_by_id != request.user.id:
+        approv.approved_by = request.user
+        approv.save(update_fields=['approved_by'])
+    messages.success(request, f'Immunization schedules for {baby.name} approved and visible to mother.')
+    return redirect('immunization_manage_baby', baby_id=baby.id)
+
+
+@role_required('DOCTOR', 'NURSE', 'ADMIN')
+def immunization_complete(request, pk):
+    try:
+        schedule = ImmunizationSchedule.objects.select_related('baby').get(pk=pk)
+    except ImmunizationSchedule.DoesNotExist:
+        messages.error(request, 'Schedule not found.')
+        return redirect('immunization_schedule_all')
+    form = AdministerImmunizationForm(request.POST or None)
+    if request.method == 'POST':
+        if form.is_valid():
+            schedule.batch_number = form.cleaned_data.get('batch_number') or ''
+            schedule.manufacturer = form.cleaned_data.get('manufacturer') or ''
+            schedule.administration_site = form.cleaned_data.get('administration_site') or ''
+            schedule.post_observation_notes = form.cleaned_data.get('notes') or ''
+            administered_at = form.cleaned_data.get('administered_at')
+            schedule.administered_at = administered_at or timezone.now()
+            schedule.administered_by = request.user
+            schedule.status = 'DONE'
+            schedule.date_completed = (administered_at or timezone.now()).date()
+            schedule.save(update_fields=['batch_number','manufacturer','administration_site','post_observation_notes','administered_at','administered_by','status','date_completed'])
+            messages.success(request, 'Immunization marked as completed.')
+            # Role-aware redirect
+            if getattr(request.user, 'role', '') == 'NURSE':
+                return redirect('nurse_dashboard')
+            if getattr(request.user, 'role', '') == 'DOCTOR':
+                return redirect('doctor_dashboard')
+            return redirect('immunization_manage_baby', baby_id=schedule.baby_id)
+        else:
+            messages.error(request, 'Please correct the form errors.')
+    return render(request, 'immunization/complete_form.html', {
+        'schedule': schedule,
+        'form': form,
+        'title': 'Mark Immunization Completed'
+    })
+
+
+@role_required('DOCTOR', 'NURSE', 'ADMIN')
+def immunization_observe(request, pk):
+    try:
+        schedule = ImmunizationSchedule.objects.select_related('baby').get(pk=pk)
+    except ImmunizationSchedule.DoesNotExist:
+        messages.error(request, 'Schedule not found.')
+        return redirect('immunization_schedule_all')
+    form = ObservationForm(request.POST or None)
+    if request.method == 'POST':
+        if form.is_valid():
+            notes = form.cleaned_data['notes']
+            schedule.post_observation_notes = notes
+            schedule.save(update_fields=['post_observation_notes'])
+            messages.success(request, 'Observation saved.')
+            # Role-aware redirect
+            if getattr(request.user, 'role', '') == 'NURSE':
+                return redirect('nurse_dashboard')
+            if getattr(request.user, 'role', '') == 'DOCTOR':
+                return redirect('doctor_dashboard')
+            return redirect('immunization_manage_baby', baby_id=schedule.baby_id)
+        else:
+            messages.error(request, 'Please add observation notes.')
+    return render(request, 'immunization/observe_form.html', {'schedule': schedule, 'form': form, 'title': 'Post-vaccination Observation'})
+
+
+@login_required
+def immunization_reschedule(request, pk):
+    if not request.user.is_staff:
+        messages.error(request, 'Staff access only.')
+        return redirect('immunization_schedule_all')
+    try:
+        schedule = ImmunizationSchedule.objects.select_related('baby').get(pk=pk)
+    except ImmunizationSchedule.DoesNotExist:
+        messages.error(request, 'Schedule not found.')
+        return redirect('immunization_schedule_all')
+    form = RescheduleForm(request.POST or None)
+    if request.method == 'POST':
+        if form.is_valid():
+            schedule.rescheduled_for = form.cleaned_data['rescheduled_for']
+            schedule.reschedule_reason = form.cleaned_data.get('reason') or ''
+            schedule.status = 'DUE'
+            schedule.save(update_fields=['rescheduled_for','reschedule_reason','status'])
+            messages.success(request, 'Immunization rescheduled.')
+            return redirect('immunization_manage_baby', baby_id=schedule.baby_id)
+        else:
+            messages.error(request, 'Please provide a new date.')
+    return render(request, 'immunization/reschedule_form.html', {'schedule': schedule, 'form': form, 'title': 'Reschedule Immunization'})
+
+
+@login_required
+def immunization_certificate(request, baby_id):
+    # Allow staff, or the baby's mother (account owner)
+    try:
+        baby = BabyProfile.objects.select_related('mother', 'mother__user').get(pk=baby_id)
+    except BabyProfile.DoesNotExist:
+        messages.error(request, 'Baby not found.')
+        return redirect('immunization_schedule')
+    is_staff = request.user.is_staff
+    is_mother_owner = hasattr(baby.mother, 'user') and baby.mother.user_id == request.user.id
+    if not (is_staff or is_mother_owner):
+        messages.error(request, 'You are not allowed to access this record.')
+        return redirect('immunization_schedule' if not is_staff else 'immunization_schedule_all')
+    # Ensure certificate exists if completed
+    items = ImmunizationSchedule.objects.filter(baby=baby).order_by('scheduled_date')
+    if items.exists() and not items.exclude(status='DONE').exists():
+        snapshot = list(items.values('vaccine_name','scheduled_date','status','date_completed'))
+        cert, _ = ImmunizationCertificate.objects.get_or_create(
+            baby=baby,
+            defaults={'generated_by': request.user, 'data_snapshot': {'items': snapshot}}
+        )
+        if cert.pk:
+            cert.generated_by = request.user
+            cert.data_snapshot = {'items': snapshot}
+            cert.save(update_fields=['generated_by','data_snapshot'])
+    cert = getattr(baby, 'immunization_certificate', None)
+    return render(request, 'immunization/certificate.html', {
+        'baby': baby,
+        'certificate': cert,
+        'items': items,
+    })

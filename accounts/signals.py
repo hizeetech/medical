@@ -4,13 +4,13 @@ from patients.models import MotherProfile
 
 
 @receiver(user_signed_up)
-def create_profile_and_flag_signup(request, user, **kwargs):
+def create_profile_and_flag_signup(sender, request, user, **kwargs):
     # Create MotherProfile if not exists
     MotherProfile.objects.get_or_create(
         user=user,
         defaults={
             'full_name': '',
-            'phone_number': user.phone_number or '',
+            'phone_number': getattr(user, 'phone_number', '') or '',
         }
     )
     # Flag session to show biodata modal after redirect to dashboard

@@ -1,0 +1,24 @@
+<div class="d-flex justify-content-between align-items-center mb-2">
+  <h2 class="h5 mb-0">Lab & Tests</h2>
+  <span class="badge text-bg-secondary">Diagnostics</span>
+</div>
+<div class="card shadow-sm">
+  <div class="card-body">
+    {% if lab_results %}
+      <div class="list-group">
+        {% for l in lab_results %}
+          <div class="list-group-item d-flex justify-content-between align-items-center">
+            <div>
+              <div class="fw-semibold">{{ l.test_type }}</div>
+              <div class="small text-muted">{{ l.get_status_display }} · {{ l.date_performed|date:'M d, Y' }}</div>
+              {% if l.result_summary %}<div class="small">{{ l.result_summary }}</div>{% endif %}
+            </div>
+            <span class="badge text-bg-light">By: {% if l.performed_by %}{{ l.performed_by.full_name|default:l.performed_by.email }}{% else %}Unknown{% endif %}</span>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="text-muted">No lab results yet.</div>
+    {% endif %}
+  </div>
+</div>

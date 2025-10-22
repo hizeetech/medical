@@ -13,7 +13,7 @@
             <strong>{{ group.baby.name }}</strong> — DOB: {{ group.baby.date_of_birth|date:'Y-m-d' }}
             {% if user.is_staff %}
               <span class="ms-2">
-                <a href="{% url 'manage_baby_immunizations' group.baby.id %}" class="btn btn-sm btn-outline-secondary">Manage</a>
+                <a href="{% url 'immunization_manage_baby' group.baby.id %}" class="btn btn-sm btn-outline-secondary">Manage</a>
               </span>
             {% endif %}
             <span class="ms-2">
@@ -30,7 +30,7 @@
                   <th>Recommended Date</th>
                   <th>Status</th>
                   <th>Completed Date</th>
-                  {% if user.is_staff %}<th>Notes</th>{% endif %}
+                  {% if user.is_staff %}<th>Notes</th><th>Observation</th><th class="text-end">Actions</th>{% endif %}
                 </tr>
               </thead>
               <tbody>
@@ -40,7 +40,13 @@
                     <td>{{ s.scheduled_date|date:'Y-m-d' }}</td>
                     <td>{{ s.get_status_display }}</td>
                     <td>{% if s.date_completed %}{{ s.date_completed|date:'Y-m-d' }}{% else %}-{% endif %}</td>
-                    {% if user.is_staff %}<td>{{ s.notes|default:'' }}</td>{% endif %}
+                    {% if user.is_staff %}
+                      <td>{{ s.notes|striptags|default:'-' }}</td>
+                      <td>{{ s.post_observation_notes|default:'-' }}</td>
+                      <td class="text-end">
+                        <a href="{% url 'immunization_observe' s.id %}" class="btn btn-sm btn-outline-secondary">Observe</a>
+                      </td>
+                    {% endif %}
                   </tr>
                 {% endfor %}
               </tbody>

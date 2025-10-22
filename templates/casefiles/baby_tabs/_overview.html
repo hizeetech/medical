@@ -1,0 +1,48 @@
+{% load static %}
+<div class="d-flex justify-content-between align-items-center mb-2">
+  <h2 class="h5 mb-0">Overview</h2>
+  <span class="badge text-bg-secondary">Summary</span>
+</div>
+<div class="row g-3">
+  <div class="col-lg-6">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h6 class="text-muted">Patient Info</h6>
+        <div class="fw-semibold">{{ baby.full_name|default:"Baby" }}</div>
+        <div class="small text-muted">Hospital ID: {{ baby.hospital_id }}</div>
+        <div class="small text-muted">DOB: {{ baby.date_of_birth|date:'M d, Y' }}</div>
+        {% if baby.mother %}
+          <div class="small text-muted">Mother: {{ baby.mother.full_name }} · Member ID: {{ baby.mother.member_id }}</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h6 class="text-muted">Upcoming Immunizations</h6>
+        {% if schedules %}
+          <div class="list-group">
+            {% for s in schedules %}
+              <div class="list-group-item d-flex justify-content-between align-items-center">
+                <div>
+                  <div class="fw-semibold">{{ s.vaccine_name }}</div>
+                  <div class="small text-muted">{{ s.scheduled_date|date:'M d, Y' }} · {{ s.get_status_display }}</div>
+                </div>
+                {% if s.status == 'DUE' %}
+                  <span class="badge text-bg-warning">Pending</span>
+                {% elif s.status == 'MISSED' %}
+                  <span class="badge text-bg-danger">Missed</span>
+                {% else %}
+                  <span class="badge text-bg-success">Done</span>
+                {% endif %}
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="text-muted">No immunizations yet.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html>
+  <body style="font-family: Arial, sans-serif; color: #222;">
+    <p>Hello {{ mother.full_name }},</p>
+    <p>
+      Reminder: {{ schedule.vaccine_name }} for {{ baby.name }} is scheduled on
+      {{ schedule.scheduled_date|date:"Y-m-d" }}.
+    </p>
+    <p>Please plan accordingly and contact the clinic if you need to reschedule.</p>
+  </body>
+</html>

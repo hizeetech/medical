@@ -8,6 +8,13 @@ from .models import (
     CaseBillingRecord,
     CaseAttachment,
     CaseActivityLog,
+    BabyCaseFile,
+    BabyVisitRecord,
+    BabyPrescription,
+    BabyLabResult,
+    BabyCaseBillingRecord,
+    BabyCaseAttachment,
+    BabyCaseActivityLog,
 )
 
 
@@ -52,4 +59,48 @@ class CaseAttachmentAdmin(admin.ModelAdmin):
 
 @admin.register(CaseActivityLog)
 class CaseActivityLogAdmin(admin.ModelAdmin):
+    list_display = ('id', 'case_file', 'user', 'action', 'created_at')
+
+
+@admin.register(BabyCaseFile)
+class BabyCaseFileAdmin(admin.ModelAdmin):
+    list_display = ('id', 'baby', 'created_by', 'created_at', 'updated_at')
+    search_fields = ('baby__name', 'baby__hospital_id', 'baby__mother__member_id')
+    list_filter = ('created_at',)
+
+
+@admin.register(BabyVisitRecord)
+class BabyVisitRecordAdmin(admin.ModelAdmin):
+    list_display = ('id', 'case_file', 'date_of_visit', 'provider')
+    search_fields = ('case_file__baby__name', 'provider__email')
+    list_filter = ('date_of_visit',)
+
+
+@admin.register(BabyPrescription)
+class BabyPrescriptionAdmin(admin.ModelAdmin):
+    list_display = ('id', 'case_file', 'drug_name', 'status', 'prescribing_by', 'created_at')
+    search_fields = ('drug_name', 'case_file__baby__name')
+    list_filter = ('status',)
+
+
+@admin.register(BabyLabResult)
+class BabyLabResultAdmin(admin.ModelAdmin):
+    list_display = ('id', 'case_file', 'test_type', 'status', 'performed_by', 'date_performed')
+    search_fields = ('test_type', 'case_file__baby__name')
+    list_filter = ('status',)
+
+
+@admin.register(BabyCaseBillingRecord)
+class BabyCaseBillingRecordAdmin(admin.ModelAdmin):
+    list_display = ('id', 'case_file', 'invoice', 'total_amount', 'payment_status')
+    list_filter = ('payment_status',)
+
+
+@admin.register(BabyCaseAttachment)
+class BabyCaseAttachmentAdmin(admin.ModelAdmin):
+    list_display = ('id', 'case_file', 'title', 'uploaded_by', 'created_at')
+
+
+@admin.register(BabyCaseActivityLog)
+class BabyCaseActivityLogAdmin(admin.ModelAdmin):
     list_display = ('id', 'case_file', 'user', 'action', 'created_at')

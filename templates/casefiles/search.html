@@ -32,8 +32,27 @@
           </div>
         </div>
       {% empty %}
-        <div class="list-group-item">No matches found.</div>
+        <div class="list-group-item">No mother case files found.</div>
       {% endfor %}
+    </div>
+
+    <div class="mt-4">
+      <h6 class="text-muted">Baby Case Files</h6>
+      <div class="list-group">
+        {% for b in babies %}
+          <div class="list-group-item d-flex justify-content-between align-items-center">
+            <div>
+              <div class="fw-semibold">{{ b.name|default:'Baby' }}</div>
+              <div class="small text-muted">Hospital ID: {{ b.hospital_id }} · Mother: {{ b.mother.full_name }}</div>
+            </div>
+            <div>
+              <a class="btn btn-outline-primary" href="{% url 'baby_casefiles_open' b.id %}"><i class="bi bi-folder2-open"></i> Open Baby Case File</a>
+            </div>
+          </div>
+        {% empty %}
+          <div class="list-group-item">No baby case files found.</div>
+        {% endfor %}
+      </div>
     </div>
   </div>
 {% endif %}

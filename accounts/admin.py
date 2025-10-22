@@ -1,6 +1,14 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from .models import User
+from patients.models import MotherProfile
+
+
+class MotherProfileInline(admin.StackedInline):
+    model = MotherProfile
+    can_delete = False
+    fk_name = 'user'
+    extra = 0
 
 
 @admin.register(User)
@@ -26,3 +34,5 @@ class UserAdmin(BaseUserAdmin):
     list_filter = ('role', 'is_staff')
     search_fields = ('email', 'first_name', 'last_name', 'specialty', 'sub_specialty')
     ordering = ('email',)
+
+    inlines = [MotherProfileInline]

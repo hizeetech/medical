@@ -98,6 +98,9 @@
                           <input type="hidden" name="remove_id" value="{{ s.id }}" />
                           <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('Remove this immunization? This cannot be undone.')">Remove</button>
                         </form>
+                        <a href="{% url 'immunization_complete' s.id %}" class="btn btn-success btn-sm">Complete</a>
+                        <a href="{% url 'immunization_observe' s.id %}" class="btn btn-outline-secondary btn-sm">Observe</a>
+                        <a href="{% url 'immunization_reschedule' s.id %}" class="btn btn-outline-primary btn-sm">Reschedule</a>
                       </td>
                     </tr>
                   {% endfor %}

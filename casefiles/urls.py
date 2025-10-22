@@ -26,4 +26,17 @@ urlpatterns = [
     path('<int:casefile_id>/access/new/', views.access_log_new, name='casefile_access_new'),
     # Status updates
     path('prescriptions/<int:pk>/status/', views.prescription_status_update, name='casefile_prescription_status'),
+
+    # Baby case file routes
+    path('baby/open/<int:baby_id>/', views.open_or_create_baby_casefile, name='baby_casefiles_open'),
+    path('baby/<int:casefile_id>/', views.baby_casefile_detail, name='baby_casefile_detail'),
+    path('baby/<int:casefile_id>/overview/', views.baby_tab_overview, name='baby_casefile_tab_overview'),
+    path('baby/<int:casefile_id>/medical-history/', views.baby_tab_medical_history, name='baby_casefile_tab_medical_history'),
+    path('baby/<int:casefile_id>/immunizations/', views.baby_tab_immunizations, name='baby_casefile_tab_immunizations'),
+    path('baby/<int:casefile_id>/prescriptions/', views.baby_tab_prescriptions, name='baby_casefile_tab_prescriptions'),
+    path('baby/<int:casefile_id>/lab-results/', views.baby_tab_lab_results, name='baby_casefile_tab_lab_results'),
+    path('baby/<int:casefile_id>/billing/', views.baby_tab_billing, name='baby_casefile_tab_billing'),
+    path('baby/<int:casefile_id>/attachments/', views.baby_tab_attachments, name='baby_casefile_tab_attachments'),
+    path('baby/<int:casefile_id>/access/', views.baby_tab_access, name='baby_casefile_tab_access'),
+    path('baby/<int:casefile_id>/print/', views.baby_casefile_print, name='baby_casefile_print'),
 ]

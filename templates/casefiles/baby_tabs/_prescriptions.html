@@ -1,0 +1,24 @@
+<div class="d-flex justify-content-between align-items-center mb-2">
+  <h2 class="h5 mb-0">Prescriptions</h2>
+  <span class="badge text-bg-secondary">Medications</span>
+</div>
+<div class="card shadow-sm">
+  <div class="card-body">
+    {% if prescriptions %}
+      <div class="list-group">
+        {% for p in prescriptions %}
+          <div class="list-group-item d-flex justify-content-between align-items-center">
+            <div>
+              <div class="fw-semibold">{{ p.drug_name }}</div>
+              <div class="small text-muted">{{ p.get_status_display }} · {{ p.created_at|date:'M d, Y' }}</div>
+              {% if p.dosage %}<div class="small">Dosage: {{ p.dosage }}</div>{% endif %}
+            </div>
+            <span class="badge text-bg-light">By: {% if p.prescribing_by %}{{ p.prescribing_by.full_name|default:p.prescribing_by.email }}{% else %}Unknown{% endif %}</span>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="text-muted">No prescriptions yet.</div>
+    {% endif %}
+  </div>
+</div>

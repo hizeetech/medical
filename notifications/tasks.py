@@ -7,6 +7,7 @@ from appointments.models import Appointment
 from immunization.models import ImmunizationSchedule
 from notifications.utils import send_email, send_sms
 from notifications.models import NotificationLog
+from django.template.loader import render_to_string
 
 User = get_user_model()
 
@@ -55,11 +56,14 @@ def send_immunization_notifications(schedule_id: int):
     phone = mother.phone_number or getattr(user, 'phone_number', '')
 
     subject = f"Immunization scheduled: {sched.vaccine_name}"
-    html = f"""
-    <p>Hello {mother.full_name},</p>
-    <p>{sched.vaccine_name} is scheduled for {sched.baby.name} on {sched.scheduled_date:%Y-%m-%d}.</p>
-    <p>Status: {sched.get_status_display()}</p>
-    """
+    html = render_to_string(
+        'notifications/email_immunization_scheduled.html',
+        {
+            'mother': mother,
+            'baby': sched.baby,
+            'schedule': sched,
+        },
+    )
     ok_email = send_email(email, subject, html)
     try:
         NotificationLog.objects.create(recipient=user, channel='EMAIL', type='REMINDER', message=subject, success=ok_email, meta={'backend': settings.EMAIL_BACKEND})
@@ -91,10 +95,14 @@ def send_immunization_reminder(schedule_id: int):
     phone = mother.phone_number or getattr(user, 'phone_number', '')
 
     subject = f"Reminder: {sched.vaccine_name} on {sched.scheduled_date:%Y-%m-%d}"
-    html = f"""
-    <p>Hello {mother.full_name},</p>
-    <p>Reminder: {sched.vaccine_name} for {sched.baby.name} is scheduled on {sched.scheduled_date:%Y-%m-%d}.</p>
-    """
+    html = render_to_string(
+        'notifications/email_immunization_reminder.html',
+        {
+            'mother': mother,
+            'baby': sched.baby,
+            'schedule': sched,
+        },
+    )
     ok_email = send_email(email, subject, html)
     try:
         NotificationLog.objects.create(recipient=user, channel='EMAIL', type='REMINDER', message=subject, success=ok_email, meta={'backend': settings.EMAIL_BACKEND})
@@ -190,10 +198,14 @@ def send_daily_immunization_today():
         email = getattr(user, 'email', '')
         phone = mother.phone_number or getattr(user, 'phone_number', '')
         subject = f"Today: {sched.vaccine_name} for {sched.baby.name}"
-        html = f"""
-        <p>Hello {mother.full_name},</p>
-        <p>Reminder: {sched.vaccine_name} for {sched.baby.name} is scheduled today ({sched.scheduled_date:%Y-%m-%d}).</p>
-        """
+        html = render_to_string(
+            'notifications/email_immunization_today.html',
+            {
+                'mother': mother,
+                'baby': sched.baby,
+                'schedule': sched,
+            },
+        )
         ok_email = send_email(email, subject, html)
         try:
             NotificationLog.objects.create(recipient=user, channel='EMAIL', type='REMINDER', message=subject, success=ok_email, meta={'backend': settings.EMAIL_BACKEND})
@@ -222,10 +234,14 @@ def send_daily_immunization_missed2():
         email = getattr(user, 'email', '')
         phone = mother.phone_number or getattr(user, 'phone_number', '')
         subject = f"Missed immunization: {sched.vaccine_name} for {sched.baby.name}"
-        html = f"""
-        <p>Hello {mother.full_name},</p>
-        <p>It looks like {sched.vaccine_name} for {sched.baby.name} scheduled on {sched.scheduled_date:%Y-%m-%d} was missed. Please contact the clinic to reschedule.</p>
-        """
+        html = render_to_string(
+            'notifications/email_missed_immunization.html',
+            {
+                'mother': mother,
+                'baby': sched.baby,
+                'schedule': sched,
+            },
+        )
         ok_email = send_email(email, subject, html)
         try:
             NotificationLog.objects.create(recipient=user, channel='EMAIL', type='REMINDER', message=subject, success=ok_email, meta={'backend': settings.EMAIL_BACKEND})

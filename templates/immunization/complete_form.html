@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+  <h3>{{ title }}</h3>
+  <p><strong>Baby:</strong> {{ schedule.baby.name }} | <strong>Vaccine:</strong> {{ schedule.vaccine_name }} | <strong>Scheduled:</strong> {{ schedule.scheduled_date }}</p>
+  <form method="post" class="mt-3">
+    {% csrf_token %}
+    <div class="mb-3">
+      <label class="form-label">Batch Number</label>
+      {{ form.batch_number }}
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Manufacturer</label>
+      {{ form.manufacturer }}
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Administration Site</label>
+      {{ form.administration_site }}
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Administered At</label>
+      {{ form.administered_at }}
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Notes</label>
+      {{ form.notes }}
+    </div>
+    <button type="submit" class="btn btn-primary">Mark Completed</button>
+    <a href="{% url 'immunization_manage_baby' schedule.baby.id %}" class="btn btn-secondary">Cancel</a>
+  </form>
+</div>
+{% endblock %}

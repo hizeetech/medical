@@ -36,6 +36,7 @@ class MotherProfile(models.Model):
 class BabyProfile(models.Model):
     mother = models.ForeignKey(MotherProfile, on_delete=models.CASCADE, related_name='babies')
     name = models.CharField(max_length=255)
+    hospital_id = models.CharField(max_length=20, unique=True, blank=True, null=True)
     gender = models.CharField(max_length=20, blank=True)
     date_of_birth = models.DateField()
     weight_kg = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
@@ -49,6 +50,11 @@ class BabyProfile(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.mother.full_name})"
+
+    def save(self, *args, **kwargs):
+        if not self.hospital_id:
+            self.hospital_id = f"BHB-{uuid.uuid4().hex[:8].upper()}"
+        super().save(*args, **kwargs)
 
 
 class VitalSigns(models.Model):

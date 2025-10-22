@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+  <h3>{{ title }}</h3>
+  <p><strong>Baby:</strong> {{ schedule.baby.name }} | <strong>Vaccine:</strong> {{ schedule.vaccine_name }}</p>
+  <form method="post" class="mt-3">
+    {% csrf_token %}
+    <div class="mb-3">
+      <label class="form-label">Observation Notes</label>
+      {{ form.notes }}
+    </div>
+    <button type="submit" class="btn btn-primary">Save Observation</button>
+    <a href="{% url 'immunization_manage_baby' schedule.baby.id %}" class="btn btn-secondary">Cancel</a>
+  </form>
+</div>
+{% endblock %}
