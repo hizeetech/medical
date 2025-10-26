@@ -1,6 +1,10 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from .models import User
+from django.db import models
+from ckeditor.widgets import CKEditorWidget
+
+from .models import User, FacilityExcelUpload
+from .forms import StaffUserAdminAddForm, StaffUserAdminChangeForm
 from patients.models import MotherProfile
 
 
@@ -13,10 +17,16 @@ class MotherProfileInline(admin.StackedInline):
 
 @admin.register(User)
 class UserAdmin(BaseUserAdmin):
+    form = StaffUserAdminChangeForm
+    add_form = StaffUserAdminAddForm
+
+    formfield_overrides = {models.TextField: {'widget': CKEditorWidget}}
+
     fieldsets = (
         (None, {'fields': ('email', 'password')}),
         ('Personal info', {'fields': ('first_name', 'last_name', 'phone_number', 'avatar')}),
         ('Professional info', {'fields': ('specialty', 'sub_specialty', 'treatments_services')}),
+        ('Facility IDs', {'fields': ('hospital_clinic_id', 'facility_name', 'staff_id', 'staff_serial_number')}),
         ('Permissions', {'fields': ('role', 'is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
         ('Important dates', {'fields': ('last_login', 'date_joined')}),
     )
@@ -25,14 +35,29 @@ class UserAdmin(BaseUserAdmin):
             'classes': ('wide',),
             'fields': (
                 'email', 'password1', 'password2', 'role',
-                'first_name', 'last_name', 'phone_number',
-                'avatar', 'specialty', 'sub_specialty', 'treatments_services'
+                'first_name', 'last_name', 'phone_number', 'avatar',
+                'specialty', 'sub_specialty', 'treatments_services',
+                # Sequential dropdowns (non-patient)
+                'state', 'lga_name', 'lga_number', 'facility_type', 'facility_number',
             ),
         }),
     )
-    list_display = ('email', 'role', 'first_name', 'last_name', 'specialty', 'sub_specialty', 'is_staff')
+    readonly_fields = ('hospital_clinic_id', 'staff_id', 'facility_name')
+    list_display = ('email', 'role', 'hospital_clinic_id', 'facility_name', 'staff_id', 'first_name', 'last_name', 'is_staff')
     list_filter = ('role', 'is_staff')
-    search_fields = ('email', 'first_name', 'last_name', 'specialty', 'sub_specialty')
+    search_fields = ('email', 'first_name', 'last_name', 'hospital_clinic_id', 'staff_id')
     ordering = ('email',)
 
+    class Media:
+        js = (
+            # Served from accounts/static/js/... → /static/js/accounts_admin_form.js
+            'js/accounts_admin_form.js',
+        )
+
     inlines = [MotherProfileInline]
+
+
+@admin.register(FacilityExcelUpload)
+class FacilityExcelUploadAdmin(admin.ModelAdmin):
+    list_display = ('uploaded_at', 'file', 'notes')
+    ordering = ('-uploaded_at',)

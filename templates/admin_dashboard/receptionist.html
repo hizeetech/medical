@@ -27,6 +27,10 @@
       <div>
         <div class="fw-semibold">{{ request.user.get_full_name|default:request.user.email }}</div>
         <div class="text-muted small">{{ request.user.email }}</div>
+        <!-- New: Facility IDs -->
+        <div class="text-muted small">Hospital/Clinic ID: {{ request.user.hospital_clinic_id|default:'—' }}</div>
+        <div class="text-muted small">Facility Name: {{ request.user.facility_name|default:'—' }}</div>
+        <div class="text-muted small">Staff ID: {{ request.user.staff_id|default:'—' }}</div>
       </div>
     </div>
   </div>

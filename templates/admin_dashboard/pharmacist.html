@@ -27,6 +27,10 @@
       <div>
         <div class="fw-semibold">{{ request.user.get_full_name|default:request.user.email }}</div>
         <div class="text-muted small">{{ request.user.email }}</div>
+        <!-- New: Facility IDs -->
+        <div class="text-muted small">Hospital/Clinic ID: {{ request.user.hospital_clinic_id|default:'—' }}</div>
+        <div class="text-muted small">Facility Name: {{ request.user.facility_name|default:'—' }}</div>
+        <div class="text-muted small">Staff ID: {{ request.user.staff_id|default:'—' }}</div>
       </div>
     </div>
   </div>
@@ -36,27 +40,27 @@
       <div class="card card-shadow h-100">
         <div class="card-body">
           <div class="d-flex align-items-center mb-2">
-            <i class="bi bi-cash-stack text-primary me-2"></i>
-            <h5 class="card-title mb-0">Recent Invoices</h5>
+            <i class="bi bi-receipt text-primary me-2"></i>
+            <h5 class="card-title mb-0">Invoices</h5>
           </div>
           {% if invoices %}
             <div class="table-responsive">
               <table class="table table-sm">
                 <thead>
                   <tr>
-                    <th>Reference</th>
                     <th>Patient</th>
                     <th>Amount</th>
                     <th>Status</th>
+                    <th>Created</th>
                   </tr>
                 </thead>
                 <tbody>
                   {% for inv in invoices %}
                     <tr>
-                      <td>{{ inv.reference }}</td>
                       <td>{{ inv.patient.full_name }}</td>
-                      <td>₦{{ inv.amount }}</td>
-                      <td><span class="badge bg-secondary">{{ inv.get_status_display }}</span></td>
+                      <td>{{ inv.amount }}</td>
+                      <td>{{ inv.get_status_display }}</td>
+                      <td>{{ inv.created_at|date:"Y-m-d" }}</td>
                     </tr>
                   {% endfor %}
                 </tbody>

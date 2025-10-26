@@ -27,96 +27,38 @@
       <div>
         <div class="fw-semibold">{{ request.user.get_full_name|default:request.user.email }}</div>
         <div class="text-muted small">{{ request.user.email }}</div>
+        <!-- New: Facility IDs -->
+        <div class="text-muted small">Hospital/Clinic ID: {{ request.user.hospital_clinic_id|default:'—' }}</div>
+        <div class="text-muted small">Facility Name: {{ request.user.facility_name|default:'—' }}</div>
+        <div class="text-muted small">Staff ID: {{ request.user.staff_id|default:'—' }}</div>
       </div>
     </div>
   </div>
 
   <div class="row g-3">
-    <div class="col-md-6">
+    <div class="col-md-12">
       <div class="card card-shadow h-100">
         <div class="card-body">
           <div class="d-flex align-items-center mb-2">
-            <i class="bi bi-clipboard-data text-primary me-2"></i>
-            <h5 class="card-title mb-0">Pending Lab Requests</h5>
+            <i class="bi bi-flask text-primary me-2"></i>
+            <h5 class="card-title mb-0">Recent Lab Tests</h5>
           </div>
-          {% if pending_requests %}
+          {% if tests %}
             <ul class="list-group list-group-flush">
-              {% for r in pending_requests %}
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                  <div>
-                    <div class="fw-semibold">{{ r.patient.full_name }} • {{ r.test_name }}</div>
-                    <div class="text-muted small">Requested: {{ r.created_at|date:"Y-m-d H:i" }}</div>
-                  </div>
-                  <span class="badge bg-info">Pending</span>
-                </li>
-              {% endfor %}
-            </ul>
-          {% else %}
-            <p class="text-muted">No pending lab requests.</p>
-          {% endif %}
-        </div>
-      </div>
-    </div>
-
-    <div class="col-md-6">
-      <div class="card card-shadow h-100">
-        <div class="card-body">
-          <div class="d-flex align-items-center mb-2">
-            <i class="bi bi-check2-circle text-success me-2"></i>
-            <h5 class="card-title mb-0">Recently Completed</h5>
-          </div>
-          {% if recent_completed %}
-            <ul class="list-group list-group-flush">
-              {% for r in recent_completed %}
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                  <div>
-                    <div class="fw-semibold">{{ r.patient.full_name }} • {{ r.test_name }}</div>
-                    <div class="text-muted small">Completed: {{ r.completed_at|date:"Y-m-d H:i" }}</div>
-                  </div>
-                  <span class="badge bg-success">Done</span>
-                </li>
-              {% endfor %}
-            </ul>
-          {% else %}
-            <p class="text-muted">No completed requests.</p>
-          {% endif %}
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="card card-shadow">
-    <div class="card-body">
-      <div class="d-flex align-items-center mb-2">
-        <i class="bi bi-file-earmark-medical text-primary me-2"></i>
-        <h5 class="card-title mb-0">Recent Test Attachments</h5>
-      </div>
-      {% if tests %}
-        <div class="table-responsive">
-          <table class="table table-sm">
-            <thead>
-              <tr>
-                <th>Patient</th>
-                <th>Description</th>
-                <th>Uploaded</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
               {% for t in tests %}
-                <tr>
-                  <td>{{ t.record.mother.full_name }}</td>
-                  <td class="text-muted">{{ t.description|default:'Lab Test'|truncatechars:80 }}</td>
-                  <td>{{ t.uploaded_at|date:"Y-m-d" }}</td>
-                  <td><a class="btn btn-sm btn-outline-primary" href="{{ t.file.url }}" target="_blank">View</a></td>
-                </tr>
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                  <div>
+                    <div class="fw-semibold">{{ t.patient.full_name|default:t.file_name }}</div>
+                    <div class="text-muted small">{{ t.description|default:'—' }} • {{ t.uploaded_at|date:"Y-m-d" }}</div>
+                  </div>
+                </li>
               {% endfor %}
-            </tbody>
-          </table>
+            </ul>
+          {% else %}
+            <p class="text-muted">No lab tests available.</p>
+          {% endif %}
         </div>
-      {% else %}
-        <p class="text-muted">No tests found.</p>
-      {% endif %}
+      </div>
     </div>
   </div>
 {% endblock %}
