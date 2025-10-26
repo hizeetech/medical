@@ -16,17 +16,17 @@ def dashboard_router(request):
     if user.is_superuser or role == 'ADMIN':
         return redirect('admin_dashboard')
 
-    # Staff roles routing
-    role_to_route = {
-        'DOCTOR': 'doctor_dashboard',
-        'NURSE': 'nurse_dashboard',
-        'RECEPTIONIST': 'receptionist_dashboard',
-        'PHARMACIST': 'pharmacist_dashboard',
-        'LAB_TECH': 'lab_tech_dashboard',
-    }
-    target = role_to_route.get(role)
-    if target:
-        return redirect(target)
+    # Staff roles routing (with new role groups)
+    if role == 'DOCTOR':
+        return redirect('doctor_dashboard')
+    elif role in ['NURSE', 'CHO', 'CHEW']:
+        return redirect('nurse_dashboard')
+    elif role in ['RECEPTIONIST', 'HEALTH_RECORD_TECHNICIAN']:
+        return redirect('receptionist_dashboard')
+    elif role in ['PHARMACIST', 'PHARMACY_TECHNICIAN']:
+        return redirect('pharmacist_dashboard')
+    elif role in ['LAB_TECH', 'LAB_ATTENDANT']:
+        return redirect('lab_tech_dashboard')
 
     # Fallback: patient dashboard
     from patients.views import dashboard as patient_dashboard

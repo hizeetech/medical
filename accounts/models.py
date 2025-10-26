@@ -37,8 +37,14 @@ class User(AbstractUser):
         ('RECEPTIONIST', 'Receptionist'),
         ('PHARMACIST', 'Pharmacist'),
         ('LAB_TECH', 'Lab Technician'),
+        # Newly Added Roles (kept uppercase to match existing usage)
+        ('CHO', 'Community Health Officer (CHO)'),
+        ('CHEW', 'Community Health Extension Worker (CHEW)'),
+        ('LAB_ATTENDANT', 'Lab Attendant'),
+        ('PHARMACY_TECHNICIAN', 'Pharmacy Technician'),
+        ('HEALTH_RECORD_TECHNICIAN', 'Health Record Technician'),
     )
-    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='PATIENT')
+    role = models.CharField(max_length=30, choices=ROLE_CHOICES, default='PATIENT')
     phone_number = models.CharField(max_length=20, blank=True)
     avatar = models.ImageField(upload_to='profiles/', blank=True, null=True)
 

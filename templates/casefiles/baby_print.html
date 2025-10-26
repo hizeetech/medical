@@ -16,7 +16,7 @@
     <div class="card-body">
       <h4 class="card-title">Identity</h4>
       <p class="mb-1"><strong>Name:</strong> {{ baby.full_name }}</p>
-      <p class="mb-1"><strong>Hospital ID:</strong> {{ baby.hospital_id }}</p>
+      <p class="mb-1"><strong>Hospital/Clinic ID:</strong> {{ baby.hospital_id }}</p>
       <p class="mb-1"><strong>Date of Birth:</strong> {{ baby.date_of_birth }}</p>
       {% if baby.mother %}
         <p class="mb-0"><strong>Mother:</strong> {{ baby.mother.full_name }} ({{ baby.mother.member_id }})</p>

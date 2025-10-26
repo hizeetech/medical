@@ -4,7 +4,7 @@
 <div class="d-flex justify-content-between align-items-center mb-3">
   <div>
     <h1 class="h4 mb-0">Baby Case File</h1>
-    <div class="small text-muted">{{ baby.full_name|default:"Baby" }} · Hospital ID: {{ baby.hospital_id }}</div>
+    <div class="small text-muted">{{ baby.full_name|default:"Baby" }} · Hospital/Clinic ID: {{ baby.hospital_id }}</div>
   </div>
   <div>
     <a class="btn btn-outline-secondary" href="{% url 'casefiles_search' %}"><i class="bi bi-arrow-left"></i> Back to Search</a>

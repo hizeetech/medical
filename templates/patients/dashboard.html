@@ -164,7 +164,7 @@
                 <li class="list-group-item d-flex justify-content-between align-items-center">
                   <div>
                     <div class="fw-semibold">{{ b.full_name|default:'Baby' }} · {{ b.date_of_birth|date:'Y-m-d' }}</div>
-                    <div class="text-muted small">Hospital ID: {{ b.hospital_id }}</div>
+                    <div class="text-muted small">Hospital/Clinic ID: {{ b.hospital_id }}</div>
                   </div>
                   <div class="d-flex align-items-center">
                     <a class="btn btn-outline-primary btn-sm" href="{% url 'baby_casefiles_open' b.id %}"><i class="bi bi-folder2-open me-1"></i> View Baby Case File</a>

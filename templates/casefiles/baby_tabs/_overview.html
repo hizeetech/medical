@@ -9,7 +9,7 @@
       <div class="card-body">
         <h6 class="text-muted">Patient Info</h6>
         <div class="fw-semibold">{{ baby.full_name|default:"Baby" }}</div>
-        <div class="small text-muted">Hospital ID: {{ baby.hospital_id }}</div>
+        <div class="small text-muted">Hospital/Clinic ID: {{ baby.hospital_id }}</div>
         <div class="small text-muted">DOB: {{ baby.date_of_birth|date:'M d, Y' }}</div>
         {% if baby.mother %}
           <div class="small text-muted">Mother: {{ baby.mother.full_name }} · Member ID: {{ baby.mother.member_id }}</div>

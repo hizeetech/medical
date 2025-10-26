@@ -23,7 +23,7 @@
           {% else %}
             <a class="text-white text-decoration-none opacity-75" href="/accounts/login/">Patient Login</a>
             <span class="opacity-50">|</span>
-            <a class="text-white text-decoration-none opacity-75" href="/accounts/signup/">Sign Up</a>
+            <!-- <a class="text-white text-decoration-none opacity-75" href="/accounts/signup/">Sign Up</a> -->
           {% endif %}
         </div>
       </div>
@@ -48,7 +48,7 @@
               <ul class="dropdown-menu" aria-labelledby="careDropdown">
                 <li><a class="dropdown-item" href="{% url 'antenatal_care' %}">Antenatal Care</a></li>
                 <li><a class="dropdown-item" href="{% url 'postnatal_care' %}">Postnatal Care</a></li>
-                <li><a class="dropdown-item" href="{% url 'newborn_immunization' %}">Newborn Immunization</a></li>
+                <li><a class="dropdown-item" href="{% url 'casefiles_search' %}">Newborn Immunization</a></li>
               </ul>
             </li>
             <li class="nav-item dropdown">
@@ -81,7 +81,7 @@
               <li class="nav-item"><a class="nav-link" href="/accounts/logout/">Logout</a></li>
             {% else %}
               <li class="nav-item"><a class="nav-link" href="/accounts/login/">Login</a></li>
-              <li class="nav-item"><a class="btn btn-outline-primary ms-lg-2" href="/accounts/signup/">Sign Up</a></li>
+              <!-- <li class="nav-item"><a class="btn btn-outline-primary ms-lg-2" href="/accounts/signup/">Sign Up</a></li> -->
             {% endif %}
           </ul>
         </div>
