@@ -56,6 +56,23 @@ class UserAdmin(BaseUserAdmin):
 
     inlines = [MotherProfileInline]
 
+    def get_inline_instances(self, request, obj=None):
+        """Show MotherProfile inline only for patient users.
+
+        When editing staff accounts, the mother profile inline contains required
+        fields (e.g., full_name) which should not block saving unrelated changes
+        like permissions. By hiding the inline for non-patient roles, we prevent
+        validation of mother fields on staff accounts.
+        """
+        # If there is no object yet (add view), do not show the inline unless
+        # the role is explicitly PATIENT, which we cannot know here, so hide it.
+        if obj is None:
+            return []
+        # For existing objects, only show inline for PATIENT role
+        if getattr(obj, 'role', None) != 'PATIENT':
+            return []
+        return super().get_inline_instances(request, obj)
+
 
 @admin.register(FacilityExcelUpload)
 class FacilityExcelUploadAdmin(admin.ModelAdmin):

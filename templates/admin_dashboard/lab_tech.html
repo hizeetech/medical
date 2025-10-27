@@ -6,7 +6,7 @@
       <p class="text-muted">Manage lab requests and results.</p>
     </div>
     <div class="d-flex align-items-center">
-      <a class="btn btn-primary me-3" href="{% url 'admin_dashboard_lab_requests' %}"><i class="bi bi-flask me-1"></i> Lab Requests</a>
+      <a class="btn btn-primary me-3" href="{% url 'lab_tech_dashboard' %}"><i class="bi bi-flask me-1"></i> Lab Requests</a>
       <form action="{% url 'casefiles_search' %}" method="get" class="d-flex" role="search">
         <input type="text" name="q" class="form-control form-control-sm me-2" placeholder="Member ID (e.g., MED-XXXXXX)" aria-label="Member ID">
         <button class="btn btn-outline-secondary btn-sm" type="submit"><i class="bi bi-search me-1"></i> Case Files</button>
